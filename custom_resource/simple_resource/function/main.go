@@ -10,24 +10,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ssm/types"
 )
 
-type CustomResEvent struct {
-	RequestType        string `json:"requestType"`
-	ServiceToken       string `json:"serviceToken"`
-	ResponseURL        string `json:"responseURL"`
-	LogicalResourceId  string `json:"logicalResourceId"`
-	PhysicalResourceId string `json:"physicalResourceId"`
-	ResourceType       string `json:"resourceType"`
-	RequestId          string `json:"requestId"`
-	StackId            string `json:"stackId"`
-	ResourceProperties map[string]interface{}
-}
-
-type CustomResResponse struct {
-	PhysicalResourceId string
-	Data               map[string]interface{}
-	NoEcho             bool
-}
-
 // SSMPutParameterAPI defines the interface for the PutParameter function.
 // We use this interface to test the function using a mocked service.
 type SSMPutParameterAPI interface {
@@ -48,78 +30,109 @@ func AddStringParameter(c context.Context, api SSMPutParameterAPI, input *ssm.Pu
 	return api.PutParameter(c, input)
 }
 
-/*
-func OnCreate(event CustomResEvent) (CustomResResponse, error) {
-	physicalResId := fmt.Sprintf("%v", event.ResourceProperties["PhysicalResourceId"])
-	parameterName := fmt.Sprintf("%v", event.ResourceProperties["SSMParamName"])
-	parameterValue := fmt.Sprintf("%v", event.ResourceProperties["SSMParamValue"])
+// SSMDeleteParameterAPI defines the interface for the DeleteParameter function.
+// We use this interface to test the function using a mocked service.
+type SSMDeleteParameterAPI interface {
+	DeleteParameter(ctx context.Context,
+		params *ssm.DeleteParameterInput,
+		optFns ...func(*ssm.Options)) (*ssm.DeleteParameterOutput, error)
+}
 
-	client := ssm.NewFromConfig(cfg)
+// RemoveParameter deletes an AWS Systems Manager string parameter.
+// Inputs:
+//     c is the context of the method call, which includes the AWS Region.
+//     api is the interface that defines the method call.
+//     input defines the input arguments to the service call.
+// Output:
+//     If success, a DeleteParameterOutput object containing the result of the service call and nil.
+//     Otherwise, nil and an error from the call to DeleteParameter.
+func RemoveParameter(c context.Context, api SSMDeleteParameterAPI, input *ssm.DeleteParameterInput) (*ssm.DeleteParameterOutput, error) {
+	return api.DeleteParameter(c, input)
+}
+
+type CustomResEvent struct {
+	RequestType        string
+	ServiceToken       string
+	ResponseURL        string
+	LogicalResourceId  string
+	PhysicalResourceId string
+	ResourceType       string
+	RequestId          string
+	StackId            string
+	ResourceProperties map[string]interface{}
+}
+
+type CustomResResponse struct {
+	PhysicalResourceId string
+	Data               map[string]interface{}
+	NoEcho             bool
+}
+
+func OnCreate(client *ssm.Client, ssmParamName string, ssmParamValue string, overwrite bool) error {
 	input := &ssm.PutParameterInput{
-		Name:      &parameterName,
-		Value:     &parameterValue,
+		Name:      &ssmParamName,
+		Value:     &ssmParamValue,
 		Type:      types.ParameterTypeString,
-		Overwrite: true,
+		Overwrite: overwrite,
 	}
-
 	results, err := AddStringParameter(context.TODO(), client, input)
 	if err != nil {
 		fmt.Println(err.Error())
-		return response, err
+		return err
 	}
-
 	fmt.Println("Parameter version:", results.Version)
 
-	//buckName := fmt.Sprintf("%v", event.ResourceProperties["BuckName"])
-
-	response = CustomResResponse{
-		PhysicalResourceId: physicalResId,
-		Data: map[string]interface{}{
-			"SSMParamName":  parameterName,
-			"SSMParamValue": parameterValue,
-		},
-		NoEcho: false,
-	}
-
-	return response, nil
+	return nil
 }
-*/
+
+func OnDelete(client *ssm.Client, ssmParamName string) error {
+	input := &ssm.DeleteParameterInput{
+		Name: &ssmParamName,
+	}
+	_, err := RemoveParameter(context.TODO(), client, input)
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
+	fmt.Println("Deleted parameter " + ssmParamName)
+
+	return nil
+}
 
 func HandleRequest(ctx context.Context, event CustomResEvent) (CustomResResponse, error) {
 	var response CustomResResponse
 
+	// Load AWS configuration.
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return response, err
 	}
 
-	physicalResId := fmt.Sprintf("%v", event.ResourceProperties["PhysicalResourceId"])
-	parameterName := fmt.Sprintf("%v", event.ResourceProperties["SSMParamName"])
-	parameterValue := fmt.Sprintf("%v", event.ResourceProperties["SSMParamValue"])
-
+	// Create SSM client.
 	client := ssm.NewFromConfig(cfg)
-	input := &ssm.PutParameterInput{
-		Name:      &parameterName,
-		Value:     &parameterValue,
-		Type:      types.ParameterTypeString,
-		Overwrite: true,
+
+	// Extract input parameters.
+	physicalResId := fmt.Sprintf("%v", event.ResourceProperties["PhysicalResourceId"])
+	ssmParamName := fmt.Sprintf("%v", event.ResourceProperties["SSMParamName"])
+	ssmParamValue := fmt.Sprintf("%v", event.ResourceProperties["SSMParamValue"])
+
+	switch event.RequestType {
+	case "Create":
+		fmt.Println("OnCreate")
+		OnCreate(client, ssmParamName, ssmParamValue, false)
+	case "Update":
+		fmt.Println("OnUpdate")
+		OnCreate(client, ssmParamName, ssmParamValue, true)
+	case "Delete":
+		fmt.Println("OnDelete")
+		OnDelete(client, ssmParamName)
 	}
-
-	results, err := AddStringParameter(context.TODO(), client, input)
-	if err != nil {
-		fmt.Println(err.Error())
-		return response, err
-	}
-
-	fmt.Println("Parameter version:", results.Version)
-
-	//buckName := fmt.Sprintf("%v", event.ResourceProperties["BuckName"])
 
 	response = CustomResResponse{
 		PhysicalResourceId: physicalResId,
 		Data: map[string]interface{}{
-			"SSMParamName":  parameterName,
-			"SSMParamValue": parameterValue,
+			"SSMParamName":  ssmParamName,
+			"SSMParamValue": ssmParamValue,
 		},
 		NoEcho: false,
 	}

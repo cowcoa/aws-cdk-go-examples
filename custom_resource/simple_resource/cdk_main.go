@@ -54,13 +54,13 @@ func NewCustomResCdkStack(scope constructs.Construct, id string, props *CustomRe
 		ProviderFunctionName: jsii.String(*stack.StackName() + "-" + "MyProvider"),
 	})
 
-	customRes := awscdk.NewCustomResource(stack, jsii.String("MyCustomRes"), &awscdk.CustomResourceProps{
+	customRes := awscdk.NewCustomResource(stack, jsii.String("MyCustomRess"), &awscdk.CustomResourceProps{
 		ServiceToken: crProvider.ServiceToken(),
 		ResourceType: jsii.String("Custom::CowCustomRes"),
 		Properties: &map[string]interface{}{
-			"PhysicalResourceId": "aabbccdd123",
-			"SSMParamName":       "my-parameter2",
-			"SSMParamValue":      "AWS yyds!",
+			"PhysicalResourceId": "aabbccdd123-change2",
+			"SSMParamName":       "my-parameter3",
+			"SSMParamValue":      "AWS yyds! again!",
 		},
 	})
 
