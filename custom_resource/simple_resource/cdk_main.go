@@ -31,7 +31,7 @@ func NewCustomResCdkStack(scope constructs.Construct, id string, props *CustomRe
 	lambdaRole := awsiam.NewRole(stack, jsii.String(config.RoleName), &awsiam.RoleProps{
 		AssumedBy: awsiam.NewServicePrincipal(jsii.String("lambda.amazonaws.com"), &awsiam.ServicePrincipalOpts{}),
 		ManagedPolicies: &[]awsiam.IManagedPolicy{
-			awsiam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonS3FullAccess")),
+			awsiam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonSSMFullAccess")),
 		},
 		RoleName: jsii.String(*stack.StackName() + "-" + config.RoleName),
 	})
@@ -58,25 +58,42 @@ func NewCustomResCdkStack(scope constructs.Construct, id string, props *CustomRe
 		ServiceToken: crProvider.ServiceToken(),
 		ResourceType: jsii.String("Custom::CowCustomRes"),
 		Properties: &map[string]interface{}{
-			"BuckName": "CowBuck",
+			"PhysicalResourceId": "aabbccdd123",
+			"SSMParamName":       "my-parameter2",
+			"SSMParamValue":      "AWS yyds!",
 		},
 	})
 
-	result := customRes.GetAtt(jsii.String("MyName")).ToString()
-	awscdk.NewCfnOutput(stack, jsii.String("CustomResResponse"), &awscdk.CfnOutputProps{
-		Value: result,
+	ssmParamName := customRes.GetAtt(jsii.String("SSMParamName")).ToString()
+	awscdk.NewCfnOutput(stack, jsii.String("SSMParamNameOutput"), &awscdk.CfnOutputProps{
+		Value: ssmParamName,
+	})
+	ssmParamValue := customRes.GetAtt(jsii.String("SSMParamValue")).ToString()
+	awscdk.NewCfnOutput(stack, jsii.String("SSMParamValueOutput"), &awscdk.CfnOutputProps{
+		Value: ssmParamValue,
 	})
 
 	// !!NOTE!!
 	// You MUST create 'my-parameter' in SSM's Parameter Store first.
 	// Otherwise, you will get 'ParameterNotFound: null' error!
+	/*
+		awsssm.NewStringParameter(stack, jsii.String("MySSMParam"), &awsssm.StringParameterProps{
+			ParameterName:  jsii.String("CowParam"),
+			StringValue:    jsii.String("CowParamValue"),
+			Description:    jsii.String("For testing."),
+			Type:           awsssm.ParameterType_STRING,
+			Tier:           awsssm.ParameterTier_STANDARD,
+			AllowedPattern: jsii.String(".*"),
+		})
+	*/
+
 	currentTime := time.Now()
 	getParameter := customresources.NewAwsCustomResource(stack, jsii.String("GetParameter"), &customresources.AwsCustomResourceProps{
 		OnUpdate: &customresources.AwsSdkCall{
 			Service: jsii.String("SSM"),
 			Action:  jsii.String("getParameter"),
 			Parameters: &map[string]interface{}{
-				"Name":           "my-parameter",
+				"Name":           ssmParamName,
 				"WithDecryption": true,
 			},
 			PhysicalResourceId: customresources.PhysicalResourceId_Of(jsii.String(currentTime.String())),
