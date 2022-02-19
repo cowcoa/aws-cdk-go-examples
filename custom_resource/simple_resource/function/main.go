@@ -149,14 +149,4 @@ func HandleRequest(ctx context.Context, event CustomResEvent) (CustomResResponse
 
 func main() {
 	lambda.Start(HandleRequest)
-	/*
-		var ctx context.Context
-		var event CustomResEvent
-		event.ResourceProperties = map[string]interface{}{
-			"PhysicalResourceId": "CowPhyId",
-			"SSMParamName":       "LocalRunParaName",
-			"SSMParamValue":      "LocalRunParaValue",
-		}
-		HandleRequest(ctx, event)
-	*/
 }

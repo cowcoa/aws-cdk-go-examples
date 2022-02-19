@@ -54,6 +54,10 @@ func NewCustomResCdkStack(scope constructs.Construct, id string, props *CustomRe
 		ProviderFunctionName: jsii.String(*stack.StackName() + "-" + "MyProvider"),
 	})
 
+	// After the first deploy. If you:
+	// Update the properties other than PhysicalResourceId, your Lambda will receive Update event.
+	// Update the PhysicalResourceId properties, your Lambda will receive Update & Delete events.
+	// Update NewCustomResource Id, your Lambda will receive Create & Delete events.
 	customRes := awscdk.NewCustomResource(stack, jsii.String("MyCustomRes2"), &awscdk.CustomResourceProps{
 		ServiceToken: crProvider.ServiceToken(),
 		ResourceType: jsii.String("Custom::CowCustomRes"),
