@@ -51,15 +51,16 @@ func RemoveParameter(c context.Context, api SSMDeleteParameterAPI, input *ssm.De
 }
 
 type CustomResEvent struct {
-	RequestType        string
-	ServiceToken       string
-	ResponseURL        string
-	LogicalResourceId  string
-	PhysicalResourceId string
-	ResourceType       string
-	RequestId          string
-	StackId            string
-	ResourceProperties map[string]interface{}
+	RequestType           string
+	ServiceToken          string
+	ResponseURL           string
+	LogicalResourceId     string
+	PhysicalResourceId    string
+	ResourceType          string
+	RequestId             string
+	StackId               string
+	ResourceProperties    map[string]interface{}
+	OldResourceProperties map[string]interface{}
 }
 
 type CustomResResponse struct {
@@ -80,7 +81,7 @@ func OnCreate(client *ssm.Client, ssmParamName string, ssmParamValue string, ove
 		fmt.Println(err.Error())
 		return err
 	}
-	fmt.Println("Parameter version:", results.Version)
+	fmt.Println("Parameter version: ", results.Version)
 
 	return nil
 }
@@ -94,7 +95,7 @@ func OnDelete(client *ssm.Client, ssmParamName string) error {
 		fmt.Println(err.Error())
 		return err
 	}
-	fmt.Println("Deleted parameter " + ssmParamName)
+	fmt.Println("Deleted parameter: " + ssmParamName)
 
 	return nil
 }
@@ -115,16 +116,22 @@ func HandleRequest(ctx context.Context, event CustomResEvent) (CustomResResponse
 	physicalResId := fmt.Sprintf("%v", event.ResourceProperties["PhysicalResourceId"])
 	ssmParamName := fmt.Sprintf("%v", event.ResourceProperties["SSMParamName"])
 	ssmParamValue := fmt.Sprintf("%v", event.ResourceProperties["SSMParamValue"])
+	ssmParamNameOld := fmt.Sprintf("%v", event.OldResourceProperties["SSMParamName"])
 
 	switch event.RequestType {
 	case "Create":
-		fmt.Println("OnCreate")
+		fmt.Printf("OnCreate, PhysicalResourceId: %s, SSMParamName: %s, SSMParamValue: %s\n", physicalResId, ssmParamName, ssmParamValue)
 		OnCreate(client, ssmParamName, ssmParamValue, false)
 	case "Update":
-		fmt.Println("OnUpdate")
-		OnCreate(client, ssmParamName, ssmParamValue, true)
+		fmt.Printf("OnUpdate, PhysicalResourceId: %s, SSMParamName: %s, SSMParamValue: %s\n", physicalResId, ssmParamName, ssmParamValue)
+		if ssmParamName == ssmParamNameOld {
+			OnCreate(client, ssmParamName, ssmParamValue, true)
+		} else {
+			OnDelete(client, ssmParamNameOld)
+			OnCreate(client, ssmParamName, ssmParamValue, false)
+		}
 	case "Delete":
-		fmt.Println("OnDelete")
+		fmt.Printf("OnDelete, PhysicalResourceId: %s, SSMParamName: %s, SSMParamValue: %s\n", physicalResId, ssmParamName, ssmParamValue)
 		OnDelete(client, ssmParamName)
 	}
 

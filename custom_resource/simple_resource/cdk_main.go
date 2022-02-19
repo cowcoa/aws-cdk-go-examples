@@ -54,13 +54,13 @@ func NewCustomResCdkStack(scope constructs.Construct, id string, props *CustomRe
 		ProviderFunctionName: jsii.String(*stack.StackName() + "-" + "MyProvider"),
 	})
 
-	customRes := awscdk.NewCustomResource(stack, jsii.String("MyCustomRess"), &awscdk.CustomResourceProps{
+	customRes := awscdk.NewCustomResource(stack, jsii.String("MyCustomRes2"), &awscdk.CustomResourceProps{
 		ServiceToken: crProvider.ServiceToken(),
 		ResourceType: jsii.String("Custom::CowCustomRes"),
 		Properties: &map[string]interface{}{
-			"PhysicalResourceId": "aabbccdd123-change2",
-			"SSMParamName":       "my-parameter3",
-			"SSMParamValue":      "AWS yyds! again!",
+			"PhysicalResourceId": "abcd1234",
+			"SSMParamName":       "my-parameter",
+			"SSMParamValue":      "AWS yyds!",
 		},
 	})
 
@@ -72,20 +72,6 @@ func NewCustomResCdkStack(scope constructs.Construct, id string, props *CustomRe
 	awscdk.NewCfnOutput(stack, jsii.String("SSMParamValueOutput"), &awscdk.CfnOutputProps{
 		Value: ssmParamValue,
 	})
-
-	// !!NOTE!!
-	// You MUST create 'my-parameter' in SSM's Parameter Store first.
-	// Otherwise, you will get 'ParameterNotFound: null' error!
-	/*
-		awsssm.NewStringParameter(stack, jsii.String("MySSMParam"), &awsssm.StringParameterProps{
-			ParameterName:  jsii.String("CowParam"),
-			StringValue:    jsii.String("CowParamValue"),
-			Description:    jsii.String("For testing."),
-			Type:           awsssm.ParameterType_STRING,
-			Tier:           awsssm.ParameterTier_STANDARD,
-			AllowedPattern: jsii.String(".*"),
-		})
-	*/
 
 	currentTime := time.Now()
 	getParameter := customresources.NewAwsCustomResource(stack, jsii.String("GetParameter"), &customresources.AwsCustomResourceProps{
