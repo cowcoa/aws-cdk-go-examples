@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"simple-resource/config"
+	"time"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
@@ -64,6 +65,30 @@ func NewCustomResCdkStack(scope constructs.Construct, id string, props *CustomRe
 	result := customRes.GetAtt(jsii.String("MyName")).ToString()
 	awscdk.NewCfnOutput(stack, jsii.String("CustomResResponse"), &awscdk.CfnOutputProps{
 		Value: result,
+	})
+
+	// !!NOTE!!
+	// You MUST create 'my-parameter' in SSM's Parameter Store first.
+	// Otherwise, you will get 'ParameterNotFound: null' error!
+	currentTime := time.Now()
+	getParameter := customresources.NewAwsCustomResource(stack, jsii.String("GetParameter"), &customresources.AwsCustomResourceProps{
+		OnUpdate: &customresources.AwsSdkCall{
+			Service: jsii.String("SSM"),
+			Action:  jsii.String("getParameter"),
+			Parameters: &map[string]interface{}{
+				"Name":           "my-parameter",
+				"WithDecryption": true,
+			},
+			PhysicalResourceId: customresources.PhysicalResourceId_Of(jsii.String(currentTime.String())),
+		},
+		Policy: customresources.AwsCustomResourcePolicy_FromSdkCalls(&customresources.SdkCallsPolicyOptions{
+			Resources: customresources.AwsCustomResourcePolicy_ANY_RESOURCE(),
+		}),
+	})
+
+	param := getParameter.GetResponseField(jsii.String("Parameter.Value"))
+	awscdk.NewCfnOutput(stack, jsii.String("GetParameterOutput"), &awscdk.CfnOutputProps{
+		Value: param,
 	})
 
 	return stack
