@@ -72,7 +72,7 @@ func NewVpcStack(scope constructs.Construct, id string, props *VpcCdkStackProps)
 func main() {
 	app := awscdk.NewApp(nil)
 
-	NewEksStack(app, config.StackName, &VpcCdkStackProps{
+	NewVpcStack(app, config.StackName, &VpcCdkStackProps{
 		awscdk.StackProps{
 			Env: env(),
 		},
