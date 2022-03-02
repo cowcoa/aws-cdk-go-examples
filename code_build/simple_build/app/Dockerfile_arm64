@@ -1,0 +1,30 @@
+# Based on Amazon Linux 2 latest version of ARM64 arch.
+# STAGE 1: Build
+FROM amazonlinux:latest@sha256:b072eb708b1a43ebfab7745a2ed7e189722632c774efddcc03c963b0b69e6d5c AS build
+
+# Configure Go
+ENV GOROOT /usr/local/go
+ENV GOPATH /workspace/go
+ENV GOBIN $GOPATH/bin
+ENV PATH $PATH:$GOROOT/bin:$GOBIN
+
+RUN mkdir -p $GOROOT $GOPATH $GOBIN
+
+# Install Go 1.17
+WORKDIR /tmp/
+RUN yum -y install tar gzip
+RUN curl https://dl.google.com/go/go1.17.6.linux-arm64.tar.gz -o go1.17.6.linux-arm64.tar.gz
+RUN rm -rf $GOROOT && tar -C /usr/local -xzf ./go1.17.6.linux-arm64.tar.gz
+RUN rm -rf go1.17.6.linux-arm64.tar.gz
+
+# Build app
+WORKDIR /app/src/
+COPY *.go go.* ./
+RUN go install
+
+# STAGE 2: Deployment
+FROM amazonlinux:latest@sha256:b072eb708b1a43ebfab7745a2ed7e189722632c774efddcc03c963b0b69e6d5c
+
+COPY --from=build /workspace/go/bin/gintest /app/bin/gintest
+
+CMD [ "/app/bin/gintest" ]

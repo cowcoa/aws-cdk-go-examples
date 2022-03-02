@@ -1,0 +1,76 @@
+version: 0.2
+
+env:
+  shell: bash
+  variables:
+    GOOS: "linux"
+    GOARCH: "arm64"
+        
+phases:
+  install:
+    on-failure: ABORT
+    commands:
+      - "echo Entered the install phase..."
+      - "go install golang.org/x/tools/cmd/goimports@latest"
+      - "go install golang.org/x/lint/golint@latest"
+      - "go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow@latest"
+      - "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.44.0"
+    finally:
+      - "echo This always runs even if the update or install command fails"
+  pre_build:
+    on-failure: ABORT
+    commands:
+      - "echo Entered the pre_build phase..."
+      - "go mod tidy"
+    finally:
+      - "echo This always runs even if the login command fails"
+  build:
+    on-failure: ABORT
+    commands:
+      - echo Entered the build phase...
+      - echo Build started on `date`
+      - "make"
+    finally:
+      - echo This always runs even if the install command fails
+  post_build:
+    on-failure: ABORT
+    commands:
+      - "echo TODO: build & push container image."
+      - echo Entered the post_build phase...
+      - echo Build completed on `date`
+reports:
+  report-group-name-or-arn:
+    files:
+      - location
+      - location
+    base-directory: location
+    discard-paths: no | yes
+    file-format: report-format
+artifacts:
+  files:
+    - location
+    - location
+  name: artifact-name
+  discard-paths: no | yes
+  base-directory: location
+  exclude-paths: excluded paths
+  enable-symlinks: no | yes
+  s3-prefix: prefix
+  secondary-artifacts:
+    artifactIdentifier:
+      files:
+        - location
+        - location
+      name: secondary-artifact-name
+      discard-paths: no | yes
+      base-directory: location
+    artifactIdentifier:
+      files:
+        - location
+        - location
+      discard-paths: no | yes
+      base-directory: location
+cache:
+  paths:
+    - path
+    - path
