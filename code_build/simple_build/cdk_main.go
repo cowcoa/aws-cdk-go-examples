@@ -22,7 +22,55 @@ func NewCodeBuildCdkStack(scope constructs.Construct, id string, props *CodeBuil
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
 	// The code that defines your stack goes here
-	awscodebuild.NewProject(stack, jsii.String("CodeBuildProject"), &awscodebuild.ProjectProps{})
+	/*
+		gitHubSource := awscodebuild.Source_GitHub(&awscodebuild.GitHubSourceProps{
+			Owner:       jsii.String("cowcoa"),
+			Repo:        jsii.String("aws-cdk-go-examples"),
+			BranchOrRef: jsii.String("master"),
+		})
+	*/
+
+	/*
+		ecrRepo := awsecr.Repository_FromRepositoryName(stack, jsii.String("EcrBuildRepo"), jsii.String("public.ecr.aws/d8k9t1f2/codebuild-linux-arm64"))
+		awscdk.NewCfnOutput(stack, jsii.String("EcrBuildRepoName"), &awscdk.CfnOutputProps{
+			Value: ecrRepo.RepositoryUri(),
+		})
+	*/
+
+	/*
+		awscodebuild.NewProject(stack, jsii.String("CodeBuildProject"), &awscodebuild.ProjectProps{
+			BuildSpec:                           awscodebuild.BuildSpec_FromSourceFilename(jsii.String("code_build/simple_build/app/buildspec_aarch64.yml")),
+			CheckSecretsInPlainTextEnvVariables: jsii.Bool(true),
+			ConcurrentBuildLimit:                jsii.Number(1),
+			Description:                         jsii.String("Test"),
+			Environment: &awscodebuild.BuildEnvironment{
+				// BuildImage:  awscodebuild.LinuxBuildImage_FromEcrRepository(ecrRepo, jsii.String("v1")),
+				BuildImage:  awscodebuild.LinuxBuildImage_FromDockerRegistry(jsii.String("public.ecr.aws/d8k9t1f2/codebuild-linux-arm64"), &awscodebuild.DockerImageOptions{}),
+				ComputeType: awscodebuild.ComputeType_SMALL,
+			},
+			ProjectName: jsii.String("HabbyTest"),
+			Source:      gitHubSource,
+		})
+	*/
+
+	////
+
+	env := awscodebuild.CfnProject_EnvironmentProperty{
+		ComputeType: jsii.String("BUILD_GENERAL1_SMALL"),
+		Image:       jsii.String("public.ecr.aws/d8k9t1f2/codebuild-linux-arm64:v1"),
+		Type:        jsii.String("ARM_CONTAINER"),
+	}
+	awscodebuild.NewCfnProject(stack, jsii.String("another"), &awscodebuild.CfnProjectProps{
+		Artifacts: awscodebuild.CfnProject_ArtifactsProperty{
+			Type: jsii.String("NO_ARTIFACTS"),
+		},
+		Environment: env,
+		ServiceRole: jsii.String("arn:aws:iam::168228779762:role/service-role/codebuild-codebuild-demo-project-service-role"),
+		Source: awscodebuild.CfnProject_SourceProperty{
+			Type:     jsii.String("GITHUB"),
+			Location: jsii.String("https://github.com/cowcoa/aws-cdk-go-examples"),
+		},
+	})
 
 	return stack
 }
