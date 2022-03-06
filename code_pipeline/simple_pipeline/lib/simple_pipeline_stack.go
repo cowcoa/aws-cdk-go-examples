@@ -55,6 +55,7 @@ func NewSimplePipelineStack(scope constructs.Construct, id string, props *awscdk
 				CodeBuildCloneOutput: jsii.Bool(true),
 				TriggerOnPush:        jsii.Bool(true),
 			}),
+			PrimaryOutputDirectory: jsii.String("code_pipeline/simple_pipeline/cdk.out"),
 		}),
 	})
 
