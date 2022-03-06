@@ -38,7 +38,7 @@ func NewSimplePipelineStack(scope constructs.Construct, id string, props *awscdk
 			},
 		},
 		Synth: pipelines.NewShellStep(jsii.String("Synth"), &pipelines.ShellStepProps{
-			Commands: &[]*string{
+			InstallCommands: &[]*string{
 				jsii.String("cd " + config.AppRootPath),
 				jsii.String("source ./setup-codebuild-env.sh"),
 				jsii.String("echo $PATH"),
@@ -48,6 +48,8 @@ func NewSimplePipelineStack(scope constructs.Construct, id string, props *awscdk
 				jsii.String("node --version"),
 				jsii.String("uname -m"),
 				jsii.String("go mod tidy"),
+			},
+			Commands: &[]*string{
 				jsii.String("./cdk-cli-wrapper-dev.sh synth"),
 			},
 			Input: pipelines.CodePipelineSource_Connection(jsii.String(config.GitHubOwner+"/"+config.GitHubRepo), jsii.String(config.GitHubBranch), &pipelines.ConnectionSourceOptions{
