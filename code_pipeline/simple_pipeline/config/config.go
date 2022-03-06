@@ -13,6 +13,9 @@ const (
 	GitHubOwner  = "cowcoa"
 	GitHubRepo   = "aws-cdk-go-examples"
 	GitHubBranch = "master"
+	// The root path of this cdk app relative to the github repository
+	// Usually this path is "./"
+	AppRootPath = "code_pipeline/simple_pipeline"
 )
 
 // DO NOT modify this function, change stack name by 'cdk.json/context/stackName'.

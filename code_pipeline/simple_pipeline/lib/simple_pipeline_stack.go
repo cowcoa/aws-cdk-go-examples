@@ -27,7 +27,7 @@ func NewSimplePipelineStack(scope constructs.Construct, id string, props *awscdk
 
 	// Construct CodePipeline
 	pipeline := pipelines.NewCodePipeline(stack, jsii.String("SimplePipeline"), &pipelines.CodePipelineProps{
-		PipelineName: jsii.String(*stack.StackName() + "-SimplePipeline"),
+		PipelineName: jsii.String(*stack.StackName()),
 		CodeBuildDefaults: &pipelines.CodeBuildOptions{
 			RolePolicy: &[]awsiam.PolicyStatement{
 				connStatement,
@@ -39,7 +39,7 @@ func NewSimplePipelineStack(scope constructs.Construct, id string, props *awscdk
 		},
 		Synth: pipelines.NewShellStep(jsii.String("Synth"), &pipelines.ShellStepProps{
 			Commands: &[]*string{
-				jsii.String("cd code_pipeline/simple_pipeline"),
+				jsii.String("cd " + config.AppRootPath),
 				jsii.String("source ./setup-codebuild-env.sh"),
 				jsii.String("echo $PATH"),
 				jsii.String("echo $GOROOT"),
@@ -55,7 +55,7 @@ func NewSimplePipelineStack(scope constructs.Construct, id string, props *awscdk
 				CodeBuildCloneOutput: jsii.Bool(true),
 				TriggerOnPush:        jsii.Bool(true),
 			}),
-			PrimaryOutputDirectory: jsii.String("code_pipeline/simple_pipeline/cdk.out"),
+			PrimaryOutputDirectory: jsii.String(config.AppRootPath + "/cdk.out"),
 		}),
 	})
 
