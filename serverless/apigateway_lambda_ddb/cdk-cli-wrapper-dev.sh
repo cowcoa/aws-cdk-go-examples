@@ -23,6 +23,9 @@ else
 fi
 
 # CDK command pre-process.
+pushd ./functions &> /dev/null
+    make TARGET_DIR="." GO_ARCH="amd64"
+popd &> /dev/null
 
 # CDK command.
 $SHELL_PATH/cdk-cli-wrapper.sh ${CDK_ACC} ${CDK_REGION} "$@"

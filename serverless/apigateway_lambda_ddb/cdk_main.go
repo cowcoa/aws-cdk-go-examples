@@ -1,12 +1,10 @@
 package main
 
 import (
-	"apigateway-lambda-ddb/config"
 	"os"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
@@ -34,19 +32,14 @@ func NewApigatewayLambdaDdbStack(scope constructs.Construct, id string, props *A
 	*/
 
 	// Create custom resource lambda function
-	awslambda.NewFunction(stack, jsii.String(config.FuncionName), &awslambda.FunctionProps{
-		FunctionName: jsii.String(*stack.StackName() + "-" + config.FuncionName),
-		Runtime:      awslambda.Runtime_FROM_IMAGE(),
-		MemorySize:   jsii.Number(config.MemorySize),
-		Timeout:      awscdk.Duration_Seconds(jsii.Number(config.MaxDuration)),
-		Code: awslambda.AssetImageCode_FromAssetImage(jsii.String("functions"), &awslambda.AssetImageCodeProps{
-			File: jsii.String("Dockerfile"),
-		}),
-		//Handler: jsii.String("/var/task/put-chat-records"),
-		Handler:               awslambda.Handler_FROM_IMAGE(),
-		LogRetention:          awslogs.RetentionDays_ONE_DAY,
-		Architecture:          awslambda.Architecture_ARM_64(),
-		CurrentVersionOptions: &awslambda.VersionOptions{},
+	awslambda.NewFunction(stack, jsii.String("PutChatRecords"), &awslambda.FunctionProps{
+		FunctionName: jsii.String(*stack.StackName() + "-PutChatRecords"),
+		Runtime:      awslambda.Runtime_GO_1_X(),
+		MemorySize:   jsii.Number(128),
+		Timeout:      awscdk.Duration_Seconds(jsii.Number(60)),
+		Code:         awslambda.AssetCode_FromAsset(jsii.String("functions/put-chat-records/."), nil),
+		Handler:      jsii.String("put-chat-records"),
+		Architecture: awslambda.Architecture_X86_64(),
 	})
 
 	/*
