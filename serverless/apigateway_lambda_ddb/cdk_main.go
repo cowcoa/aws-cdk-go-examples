@@ -1,6 +1,7 @@
 package main
 
 import (
+	"apigateway-lambda-ddb/config"
 	"os"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
@@ -55,7 +56,7 @@ func NewApigatewayLambdaDdbStack(scope constructs.Construct, id string, props *A
 func main() {
 	app := awscdk.NewApp(nil)
 
-	NewApigatewayLambdaDdbStack(app, "ApigatewayLambdaDdbStack", &ApigatewayLambdaDdbStackProps{
+	NewApigatewayLambdaDdbStack(app, config.StackName(app), &ApigatewayLambdaDdbStackProps{
 		awscdk.StackProps{
 			Env: env(),
 		},

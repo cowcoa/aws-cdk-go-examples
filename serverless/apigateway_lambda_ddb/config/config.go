@@ -1,7 +1,11 @@
 package config
 
+import (
+	"github.com/aws/constructs-go/constructs/v10"
+	"github.com/aws/jsii-runtime-go"
+)
+
 const (
-	StackName = "CdkGolangExample-ApiGtwLambdaDdb"
 	// Lambda function config
 	RoleName    = "CRLambdaRole"
 	FuncionName = "ApigLambdaFunction"
@@ -19,3 +23,15 @@ const (
 	SsmParamNameKey  = "SSMParamName"
 	SsmParamValueKey = "SSMParamValue"
 )
+
+// DO NOT modify this function, change stack name by 'cdk.json/context/stackName'.
+func StackName(scope constructs.Construct) string {
+	stackName := "ApigLambdaDdb"
+
+	ctxValue := scope.Node().TryGetContext(jsii.String("stackName"))
+	if v, ok := ctxValue.(string); ok {
+		stackName = v
+	}
+
+	return stackName
+}
