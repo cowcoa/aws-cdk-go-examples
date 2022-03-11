@@ -1,6 +1,7 @@
 .DEFAULT_GOAL := build
 
-BUILD_ENV_FLAGS := GOARCH=arm64 GOOS=linux
+GO_ARCH := arm64
+BUILD_ENV_FLAGS := GOARCH=$(GO_ARCH) GOOS=linux
 TARGET_DIR := ${CURDIR}/bin
 
 build:
@@ -9,6 +10,3 @@ build:
 		$(BUILD_ENV_FLAGS) go build -o $(TARGET_DIR)/$$target; \
 		popd &> /dev/null; \
 	done
-
-clean:
-	@rm -rf $(TARGET_DIR)

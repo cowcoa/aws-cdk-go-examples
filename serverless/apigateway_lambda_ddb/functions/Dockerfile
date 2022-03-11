@@ -20,7 +20,7 @@ RUN rm -rf go1.17.7.linux-arm64.tar.gz
 # Build app
 WORKDIR /functions/
 COPY ./ ./
-RUN make
+RUN make GO_ARCH="arm64"
 
 # STAGE 2: Deployment
 FROM public.ecr.aws/lambda/provided:latest-arm64
@@ -31,4 +31,3 @@ COPY --from=build /functions/bin/ ${LAMBDA_TASK_ROOT}
 COPY --from=build /functions/entry_script.sh /entry_script.sh
 RUN ls -R
 ENTRYPOINT [ "/entry_script.sh" ]
-CMD [ "/var/task/put-chat-records" ]
