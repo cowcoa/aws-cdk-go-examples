@@ -29,5 +29,5 @@ FROM public.ecr.aws/lambda/provided:latest-arm64
 COPY --from=build /functions/bin/ ${LAMBDA_TASK_ROOT}
 # Install RIE script
 COPY --from=build /functions/entry_script.sh /entry_script.sh
-RUN ls -R
+#
 ENTRYPOINT [ "/entry_script.sh" ]
