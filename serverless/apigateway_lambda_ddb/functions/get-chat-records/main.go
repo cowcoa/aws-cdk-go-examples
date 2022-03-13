@@ -173,6 +173,7 @@ func handleRequest(ctx context.Context, request events.APIGatewayProxyRequest) (
 	log.Println(string(jsobj))
 
 	return events.APIGatewayProxyResponse{
-		StatusCode: 201,
+		StatusCode: http.StatusOK,
+		Body:       string(jsobj),
 	}, nil
 }
