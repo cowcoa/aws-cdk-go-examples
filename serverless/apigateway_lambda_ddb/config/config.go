@@ -5,6 +5,11 @@ import (
 	"github.com/aws/jsii-runtime-go"
 )
 
+const (
+	DynamoDBTable = "ChatTable"
+	DynamoDBGSI   = "ChatTableGSI"
+)
+
 // DO NOT modify this function, change stack name by 'cdk.json/context/stackName'.
 func StackName(scope constructs.Construct) string {
 	stackName := "ApiGtwLambdaDdb"

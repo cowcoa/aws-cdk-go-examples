@@ -48,6 +48,9 @@ func NewApiGtwLambdaDdbStack(scope constructs.Construct, id string, props *ApiGt
 		Architecture: awslambda.Architecture_X86_64(),
 		Role:         lambdaRole,
 		LogRetention: awslogs.RetentionDays_ONE_WEEK,
+		Environment: &map[string]*string{
+			"DYNAMODB_TABLE": jsii.String(*stack.StackName() + "-" + config.DynamoDBTable),
+		},
 	})
 
 	// Create get-chat-records function.
@@ -61,6 +64,10 @@ func NewApiGtwLambdaDdbStack(scope constructs.Construct, id string, props *ApiGt
 		Architecture: awslambda.Architecture_X86_64(),
 		Role:         lambdaRole,
 		LogRetention: awslogs.RetentionDays_ONE_WEEK,
+		Environment: &map[string]*string{
+			"DYNAMODB_TABLE": jsii.String(*stack.StackName() + "-" + config.DynamoDBTable),
+			"DYNAMODB_GSI":   jsii.String(config.DynamoDBGSI),
+		},
 	})
 
 	// Create API Gateway rest api.
@@ -84,8 +91,8 @@ func NewApiGtwLambdaDdbStack(scope constructs.Construct, id string, props *ApiGt
 	// Data Modeling
 	// name(PK), time(SK),                  comment, chat_room
 	// string    string(micro sec unixtime)	string   string
-	chatTable := awsdynamodb.NewTable(stack, jsii.String("ChatTable"), &awsdynamodb.TableProps{
-		TableName:     jsii.String(*stack.StackName() + "-ChatTable"),
+	chatTable := awsdynamodb.NewTable(stack, jsii.String(config.DynamoDBTable), &awsdynamodb.TableProps{
+		TableName:     jsii.String(*stack.StackName() + "-" + config.DynamoDBTable),
 		BillingMode:   awsdynamodb.BillingMode_PROVISIONED,
 		ReadCapacity:  jsii.Number(1),
 		WriteCapacity: jsii.Number(1),
@@ -106,7 +113,7 @@ func NewApiGtwLambdaDdbStack(scope constructs.Construct, id string, props *ApiGt
 	// chat_room(PK), time(SK),                  comment, name
 	// string         string(micro sec unixtime) string   string
 	chatTable.AddGlobalSecondaryIndex(&awsdynamodb.GlobalSecondaryIndexProps{
-		IndexName: jsii.String("ChatTableGSI"),
+		IndexName: jsii.String(config.DynamoDBGSI),
 		PartitionKey: &awsdynamodb.Attribute{
 			Name: jsii.String("chat_room"),
 			Type: awsdynamodb.AttributeType_STRING,
