@@ -8,10 +8,9 @@ CDK_ACC="$(aws sts get-caller-identity --output text --query 'Account')"
 CDK_REGION=""
 
 # Check execution env.
-if [ -z $CODEBUILD_BUILD_ID ] 
+if [ -z $CODEBUILD_BUILD_ID ]
 then
-    if [ -z "$CDK_REGION" ]
-    then
+    if [ -z "$CDK_REGION" ]; then
         CDK_REGION="$(aws configure get region)"
     fi
 

@@ -24,6 +24,6 @@
       "aws",
       "aws-cn"
     ],
-    "stackName" : "CdkGolangExample-ApigLambdaDdb"
+    "stackName" : "CdkGolangExample-ApiGtwLambdaDdb"
   }
 }

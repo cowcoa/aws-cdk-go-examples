@@ -1,4 +1,4 @@
-module apigateway-lambda-ddb
+module apigtw-lambda-ddb
 
 go 1.17
 

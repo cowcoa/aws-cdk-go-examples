@@ -1,7 +1,6 @@
 package main
 
 import (
-	"apigateway-lambda-ddb/config"
 	"os"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
@@ -10,33 +9,36 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
+
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
+
+	"apigtw-lambda-ddb/config"
 )
 
-type ApigatewayLambdaDdbStackProps struct {
+type ApiGtwLambdaDdbStackProps struct {
 	awscdk.StackProps
 }
 
-func NewApigatewayLambdaDdbStack(scope constructs.Construct, id string, props *ApigatewayLambdaDdbStackProps) awscdk.Stack {
+func NewApiGtwLambdaDdbStack(scope constructs.Construct, id string, props *ApiGtwLambdaDdbStackProps) awscdk.Stack {
 	var sprops awscdk.StackProps
 	if props != nil {
 		sprops = props.StackProps
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
-	// The code that defines your stack goes here
-	ddbLambdaRole := awsiam.NewRole(stack, jsii.String(config.RoleName), &awsiam.RoleProps{
-		RoleName:  jsii.String(*stack.StackName() + "-" + config.RoleName),
-		AssumedBy: awsiam.NewServicePrincipal(jsii.String("lambda.amazonaws.com"), &awsiam.ServicePrincipalOpts{}),
+	// Create role for lambda function.
+	lambdaRole := awsiam.NewRole(stack, jsii.String("LambdaRole"), &awsiam.RoleProps{
+		RoleName:  jsii.String(*stack.StackName() + "-LambdaRole"),
+		AssumedBy: awsiam.NewServicePrincipal(jsii.String("lambda.amazonaws.com"), nil),
 		ManagedPolicies: &[]awsiam.IManagedPolicy{
 			awsiam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonDynamoDBFullAccess")),
 			awsiam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("CloudWatchFullAccess")),
 		},
 	})
 
-	// Create custom resource lambda function
-	pubRecordFunc := awslambda.NewFunction(stack, jsii.String("PutChatRecords"), &awslambda.FunctionProps{
+	// Create put-chat-records function.
+	putFunction := awslambda.NewFunction(stack, jsii.String("PutFunction"), &awslambda.FunctionProps{
 		FunctionName: jsii.String(*stack.StackName() + "-PutChatRecords"),
 		Runtime:      awslambda.Runtime_GO_1_X(),
 		MemorySize:   jsii.Number(128),
@@ -44,11 +46,12 @@ func NewApigatewayLambdaDdbStack(scope constructs.Construct, id string, props *A
 		Code:         awslambda.AssetCode_FromAsset(jsii.String("functions/put-chat-records/."), nil),
 		Handler:      jsii.String("put-chat-records"),
 		Architecture: awslambda.Architecture_X86_64(),
-		Role:         ddbLambdaRole,
+		Role:         lambdaRole,
 		LogRetention: awslogs.RetentionDays_ONE_WEEK,
 	})
 
-	getRecordFunc := awslambda.NewFunction(stack, jsii.String("GetChatRecords"), &awslambda.FunctionProps{
+	// Create get-chat-records function.
+	getFunction := awslambda.NewFunction(stack, jsii.String("GetChatRecords"), &awslambda.FunctionProps{
 		FunctionName: jsii.String(*stack.StackName() + "-GetChatRecords"),
 		Runtime:      awslambda.Runtime_GO_1_X(),
 		MemorySize:   jsii.Number(128),
@@ -56,28 +59,33 @@ func NewApigatewayLambdaDdbStack(scope constructs.Construct, id string, props *A
 		Code:         awslambda.AssetCode_FromAsset(jsii.String("functions/get-chat-records/."), nil),
 		Handler:      jsii.String("get-chat-records"),
 		Architecture: awslambda.Architecture_X86_64(),
-		Role:         ddbLambdaRole,
+		Role:         lambdaRole,
 		LogRetention: awslogs.RetentionDays_ONE_WEEK,
 	})
 
+	// Create API Gateway rest api.
 	restApi := awsapigateway.NewRestApi(stack, jsii.String("LambdaRestApi"), &awsapigateway.RestApiProps{
-		Description: jsii.String("example rest api"),
+		RestApiName:        jsii.String(*stack.StackName() + "-LambdaRestApi"),
+		RetainDeployments:  jsii.Bool(false),
+		EndpointExportName: jsii.String("RestApiUrl"),
+		Deploy:             jsii.Bool(true),
 		DeployOptions: &awsapigateway.StageOptions{
 			StageName: jsii.String("dev"),
 		},
 	})
 
-	putRecords := restApi.Root().AddResource(jsii.String("put-chat-records"), &awsapigateway.ResourceOptions{})
-	putRecords.AddMethod(jsii.String("POST"), awsapigateway.NewLambdaIntegration(pubRecordFunc, &awsapigateway.LambdaIntegrationOptions{}), &awsapigateway.MethodOptions{})
+	// Add path resources to rest api.
+	putRecordsRes := restApi.Root().AddResource(jsii.String("put-chat-records"), nil)
+	putRecordsRes.AddMethod(jsii.String("POST"), awsapigateway.NewLambdaIntegration(putFunction, nil), nil)
+	getRecordsRes := restApi.Root().AddResource(jsii.String("get-chat-records"), nil)
+	getRecordsRes.AddMethod(jsii.String("GET"), awsapigateway.NewLambdaIntegration(getFunction, nil), nil)
 
-	getRecords := restApi.Root().AddResource(jsii.String("get-chat-records"), &awsapigateway.ResourceOptions{})
-	getRecords.AddMethod(jsii.String("GET"), awsapigateway.NewLambdaIntegration(getRecordFunc, &awsapigateway.LambdaIntegrationOptions{}), &awsapigateway.MethodOptions{})
-
+	// Create DynamoDB Base table.
 	// Data Modeling
 	// name(PK), time(SK),                  comment, chat_room
 	// string    string(micro sec unixtime)	string   string
 	chatTable := awsdynamodb.NewTable(stack, jsii.String("ChatTable"), &awsdynamodb.TableProps{
-		TableName:     jsii.String("ChatTable"),
+		TableName:     jsii.String(*stack.StackName() + "-ChatTable"),
 		BillingMode:   awsdynamodb.BillingMode_PROVISIONED,
 		ReadCapacity:  jsii.Number(1),
 		WriteCapacity: jsii.Number(1),
@@ -93,6 +101,7 @@ func NewApigatewayLambdaDdbStack(scope constructs.Construct, id string, props *A
 		PointInTimeRecovery: jsii.Bool(true),
 	})
 
+	// Create DynamoDB GSI table.
 	// Data Modeling
 	// chat_room(PK), time(SK),                  comment, name
 	// string         string(micro sec unixtime) string   string
@@ -109,8 +118,9 @@ func NewApigatewayLambdaDdbStack(scope constructs.Construct, id string, props *A
 		ProjectionType: awsdynamodb.ProjectionType_ALL,
 	})
 
-	chatTable.GrantWriteData(pubRecordFunc)
-	chatTable.GrantReadData(getRecordFunc)
+	// Grant access to lambda functions.
+	chatTable.GrantWriteData(putFunction)
+	chatTable.GrantReadData(getFunction)
 
 	return stack
 }
@@ -118,7 +128,7 @@ func NewApigatewayLambdaDdbStack(scope constructs.Construct, id string, props *A
 func main() {
 	app := awscdk.NewApp(nil)
 
-	NewApigatewayLambdaDdbStack(app, config.StackName(app), &ApigatewayLambdaDdbStackProps{
+	NewApiGtwLambdaDdbStack(app, config.StackName(app), &ApiGtwLambdaDdbStackProps{
 		awscdk.StackProps{
 			Env: env(),
 		},
