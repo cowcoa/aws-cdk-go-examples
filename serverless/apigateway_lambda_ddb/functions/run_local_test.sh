@@ -27,5 +27,12 @@ fi
 echo "Build docker image..."
 docker build -t $ecr_repo $SHELL_PATH
 
+AWS_ACCESS_KEY_ID=$(aws --profile default configure get aws_access_key_id)
+AWS_SECRET_ACCESS_KEY=$(aws --profile default configure get aws_secret_access_key)
+
 echo "Lambda runtime emulator is listening port 9000..."
-docker run -p 9000:8080 ${ecr_repo}:latest /var/task/put-chat-records
+docker run \
+        -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+        -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+        -p 9000:8080 ${ecr_repo}:latest \
+        /var/task/"$@"

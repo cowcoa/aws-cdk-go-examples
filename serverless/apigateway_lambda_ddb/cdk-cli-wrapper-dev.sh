@@ -5,7 +5,7 @@ SHELL_PATH=$(cd "$(dirname "$0")";pwd)
 
 CDK_CMD=$1
 CDK_ACC="$(aws sts get-caller-identity --output text --query 'Account')"
-CDK_REGION="us-west-2"
+CDK_REGION=""
 
 # Check execution env.
 if [ -z $CODEBUILD_BUILD_ID ] 

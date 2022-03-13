@@ -14,11 +14,16 @@ if test $arg_count -eq 0; then
     echo ""
     echo "Examples:"
     echo ""
-    echo "      $script_name -d '{\"name\":\"hello world!\"}'"
+    echo "      $script_name '{\"body\":\"{\\\"name\\\":\\\"Cow\\\",\\\"comment\\\":\\\"Sample comment!\\\",\\\"chatRoom\\\":\\\"101\\\"}\"}'"
     echo ""
-    echo "      $script_name -d @json_file"
+    echo "      $script_name @put-chat-records/sample_body.json"
+    echo ""
+    echo "      $script_name '{\"queryStringParameters\":{\"chatroom\":\"101\"}}'"
+    echo ""
+    echo "      $script_name @get-chat-records/sample_query_string.json"
     echo ""
     exit 0
 fi
 
-curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" "$@"
+curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d "$@"
+echo ""

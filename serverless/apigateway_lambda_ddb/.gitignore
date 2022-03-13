@@ -6,6 +6,7 @@
 *.dylib
 functions/bin/
 functions/put-chat-records/put-chat-records
+functions/get-chat-records/get-chat-records
 
 # Test binary, built with `go test -c`
 *.test
