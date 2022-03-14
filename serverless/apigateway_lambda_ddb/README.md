@@ -74,7 +74,7 @@ Or you can QUERY user comments by following API:
 ## Development
 In your day-to-day development work, running Lambda functions locally can improve productivity.<br />
 All scripting tools related to Lambda functions are in the 'functions' directory.<br />
-Run the following command to build a docker image and run the container:<br />
+Run the following command to build a Docker image and run the container:<br />
   ```sh
   ./run_local_test.sh
   Script for running RIE in local.
