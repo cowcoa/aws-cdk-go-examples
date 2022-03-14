@@ -4,7 +4,8 @@ We use the classic AWS serverless architecture to demonstrate how to build a sim
 ## Prerequisite
 1. Install and configure AWS CLI environment:<br />
    [Installation] - Installing or updating the latest version of the AWS CLI.<br />
-   [Configuration] - Configure basic settings that AWS CLI uses to interact with AWS.
+   [Configuration] - Configure basic settings that AWS CLI uses to interact with AWS.<br />
+   NOTE: Make sure your IAM User/Role has sufficient permissions.
 2. Install AWS CDK Toolkit:
     ```sh
     curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
@@ -32,6 +33,42 @@ If all goes well, you will see the following output:<br />
 You can also clean up the deployment by running command:<br />
   ```sh
   cdk-cli-wrapper-dev.sh destroy
+  ```
+
+## Testing
+As you see in the output of the Deployment step, the URL is your API Gateway endpoint:<br />
+  ```sh
+  https://b12gqp2av5.execute-api.ap-northeast-2.amazonaws.com/dev/
+  ```
+We have integrate two Lambda functions in the following resource path:
+  ```sh
+  put-chat-records
+  get-chat-records
+  ```
+You can POST user comment by following API:
+  ```sh
+  POST https://b12gqp2av5.execute-api.ap-northeast-2.amazonaws.com/dev/put-chat-records
+  Content-Type: application/json
+  Body:
+  {
+    "name"    : string,
+    "comment" : string,
+    "chatRoom": string
+  }
+  Status Code: 201 Created
+  ```
+Or you can QUERY user comments by following API:
+  ```sh
+  GET https://b12gqp2av5.execute-api.ap-northeast-2.amazonaws.com/dev/get-chat-records?chatroom=abc123
+  Status Code: 200 OK
+  [
+    {
+      "name"   :string,
+      "comment":string,
+      "time"   :string
+    },
+    ...
+  ]
   ```
 
 [Installation]: <https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html>
