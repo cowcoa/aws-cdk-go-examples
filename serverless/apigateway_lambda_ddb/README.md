@@ -71,6 +71,45 @@ Or you can QUERY user comments by following API:
   ]
   ```
 
+## Development
+In your day-to-day development work, running lambda locally can improve development productivity.<br />
+All scripting tools related to Lambda functions are in the 'functions' directory.<br />
+Run the following command to build a docker image and run the container:<br />
+  ```sh
+  ./run_local_test.sh
+  Script for running RIE in local.
+  
+  Usage:
+  
+        run_local_test.sh <lambda_function_name>
+        
+  Examples:
+  
+        run_local_test.sh put-chat-records
+  
+  ```
+Keep run_local_test.sh running and open another terminal, run the test script:<br />
+  ```sh
+  ./do_local_test.sh
+  Script for testing lambda function in local.
+  
+  Usage:
+  
+        do_local_test.sh <json body>
+        
+  Examples:
+  
+        do_local_test.sh '{"body":"{\"name\":\"Cow\",\"comment\":\"Sample comment!\",\"chatRoom\":\"101\"}"}'
+        
+        do_local_test.sh @put-chat-records/sample_body.json
+        
+        do_local_test.sh '{"queryStringParameters":{"chatroom":"101"}}'
+        
+        do_local_test.sh @get-chat-records/sample_query_string.json
+  
+  ```
+The first two examples are for put-chat-records function, and the last two examples are for get-chat-records function.
+
 [Installation]: <https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html>
 [Configuration]: <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html>
 [Download and Install]: <https://go.dev/doc/install>
