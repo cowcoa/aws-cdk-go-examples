@@ -19,7 +19,7 @@ We use the classic AWS serverless architecture to demonstrate how to build a sim
 5. Make sure you also have GNU Make installed.
 
 ## Deployment
-Run the following command to deploy AWS infra and code using CDK Toolkit:<br />
+Run the following command to deploy AWS infra and code by CDK Toolkit:<br />
   ```sh
   cdk-cli-wrapper-dev.sh deploy
   ```
@@ -40,7 +40,7 @@ As you see in the output of the Deployment step, the URL is your API Gateway end
   ```sh
   https://b12gqp2av5.execute-api.ap-northeast-2.amazonaws.com/dev/
   ```
-We have integrate two Lambda functions in the following resource path:
+We have integrated two Lambda functions with the following resource paths:
   ```sh
   put-chat-records
   get-chat-records
@@ -72,7 +72,7 @@ Or you can QUERY user comments by following API:
   ```
 
 ## Development
-In your day-to-day development work, running lambda locally can improve development productivity.<br />
+In your day-to-day development work, running Lambda functions locally can improve productivity.<br />
 All scripting tools related to Lambda functions are in the 'functions' directory.<br />
 Run the following command to build a docker image and run the container:<br />
   ```sh
