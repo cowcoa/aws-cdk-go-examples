@@ -1,7 +1,7 @@
 ## AWS Serverless PoC (API Gateway + Lambda + DynamoDB)
 We use the classic AWS serverless architecture to demonstrate how to build a simple chat room service.<br />
 
-## Prerequisite
+## Prerequisites
 1. Install and configure AWS CLI environment:<br />
    [Installation] - Installing or updating the latest version of the AWS CLI.<br />
    [Configuration] - Configure basic settings that AWS CLI uses to interact with AWS.<br />
@@ -15,7 +15,7 @@ We use the classic AWS serverless architecture to demonstrate how to build a sim
 3. Install Golang:<br />
    [Download and Install] - Download and install Go quickly with the steps described here.
 4. Install Docker:<br />
-   [Install Docker Engine] - Find the corresponding platform and install Docker.
+   [Install Docker Engine] - The installation section shows you how to install Docker on a variety of platforms.
 5. Make sure you also have GNU Make installed.
 
 ## Deployment
@@ -109,6 +109,12 @@ Keep run_local_test.sh running and open another terminal, run the test script:<b
   
   ```
 The first two examples are for put-chat-records function, and the last two examples are for get-chat-records function.
+
+## Update Lambda functions
+When you are done modifying the Lambda function code, you can run the following command again:<br />
+  ```sh
+  cdk-cli-wrapper-dev.sh deploy
+  ```
 
 [Installation]: <https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html>
 [Configuration]: <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html>
