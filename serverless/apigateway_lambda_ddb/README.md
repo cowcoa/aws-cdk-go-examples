@@ -108,7 +108,7 @@ Keep run_local_test.sh running and open another terminal, run the test script:<b
         do_local_test.sh @get-chat-records/sample_query_string.json
   
   ```
-The first two examples are for put-chat-records function, and the last two examples are for get-chat-records function.
+The first two examples are for put-chat-records function, and the last two examples are for get-chat-records function.<br />
 When you are done modifying the Lambda function code, you can run the following command again:<br />
   ```sh
   cdk-cli-wrapper-dev.sh deploy
