@@ -27,6 +27,8 @@ If all goes well, you will see the following output:<br />
   ```sh
   Outputs:
   CdkGolangExample-ApiGtwLambdaDdb.LambdaRestApiEndpointCCECE4C1 = https://b12gqp2av5.execute-api.ap-northeast-2.amazonaws.com/dev/
+  Stack ARN:
+  arn:aws:cloudformation:ap-northeast-2:123456789012:stack/CdkGolangExample-ApiGtwLambdaDdb/225b9050-a414-11ec-b5c2-0ab842e4df54
   
   ✨  Total time: 133.05s
   ```
