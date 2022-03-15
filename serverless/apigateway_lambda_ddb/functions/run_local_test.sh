@@ -5,6 +5,13 @@ script_name=$(basename $0)
 arg_count=$#
 SHELL_PATH=$(cd "$(dirname "$0")";pwd)
 
+# Check architecture of local machine, specify corresponding Dockerfile.
+local_arch=$(uname -m)
+docker_file="Dockerfile"
+if [ "$local_arch" == "aarch64" ]; then
+    docker_file="${docker_file}_arm64"
+fi
+
 lambda_handler="/var/task/"
 ecr_repo="apig-lambda-ddb"
 
@@ -25,12 +32,12 @@ else
 fi
 
 echo "Build docker image..."
-docker build -t $ecr_repo $SHELL_PATH
+docker build -t $ecr_repo -f $SHELL_PATH/$docker_file $SHELL_PATH
 
 AWS_ACCESS_KEY_ID=$(aws --profile default configure get aws_access_key_id)
 AWS_SECRET_ACCESS_KEY=$(aws --profile default configure get aws_secret_access_key)
 AWS_REGION="$(aws configure get region)"
-DYNAMODB_TABLE="CdkGolangExample-ApiGtwLambdaDdb-ChatTable"
+DYNAMODB_TABLE="$(jq -r .context.stackName ../cdk.json)-ChatTable"
 DYNAMODB_GSI="ChatTableGSI"
 
 echo "Lambda runtime emulator is listening port 9000..."
