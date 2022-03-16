@@ -16,7 +16,7 @@ We use the classic AWS serverless architecture to demonstrate how to build a sim
    [Download and Install] - Download and install Go quickly with the steps described here.
 4. Install Docker:<br />
    [Install Docker Engine] - The installation section shows you how to install Docker on a variety of platforms.
-5. Make sure you also have GNU Make installed.
+5. Make sure you also have GNU Make, jq installed.
 
 ## Deployment
 Run the following command to deploy AWS infra and code by CDK Toolkit:<br />
