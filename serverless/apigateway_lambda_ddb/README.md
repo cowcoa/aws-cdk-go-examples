@@ -6,17 +6,21 @@ We use the classic AWS serverless architecture to demonstrate how to build a sim
    [Installation] - Installing or updating the latest version of the AWS CLI.<br />
    [Configuration] - Configure basic settings that AWS CLI uses to interact with AWS.<br />
    NOTE: Make sure your IAM User/Role has sufficient permissions.
-2. Install AWS CDK Toolkit:
+2. Install NVM:<br />
+   [Install NVM] - Install NVM and configure your environment according to this document.
+3. Install Node.js:<br />
     ```sh
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
     nvm install 16.3.0
+    ```
+4. Install AWS CDK Toolkit:
+    ```sh
     npm install -g aws-cdk
     ```
-3. Install Golang:<br />
+5. Install Golang:<br />
    [Download and Install] - Download and install Go quickly with the steps described here.
-4. Install Docker:<br />
+6. Install Docker:<br />
    [Install Docker Engine] - The installation section shows you how to install Docker on a variety of platforms.
-5. Make sure you also have GNU Make, jq installed.
+7. Make sure you also have GNU Make, jq installed.
 
 ## Deployment
 Run the following command to deploy AWS infra and code by CDK Toolkit:<br />
@@ -118,5 +122,6 @@ When you are done modifying the Lambda function code, you can run the following 
 
 [Installation]: <https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html>
 [Configuration]: <https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-quickstart.html>
+[Install NVM]: <https://github.com/nvm-sh/nvm#install--update-script>
 [Download and Install]: <https://go.dev/doc/install>
 [Install Docker Engine]: <https://docs.docker.com/engine/install/>
