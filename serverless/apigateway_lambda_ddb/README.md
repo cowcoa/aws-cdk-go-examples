@@ -6,7 +6,7 @@ We use the classic AWS serverless architecture to demonstrate how to build a sim
    [Installation] - Installing or updating the latest version of the AWS CLI.<br />
    [Configuration] - Configure basic settings that AWS CLI uses to interact with AWS.<br />
    NOTE: Make sure your IAM User/Role has sufficient permissions.
-2. Install NVM:<br />
+2. Install Node Version Manager:<br />
    [Install NVM] - Install NVM and configure your environment according to this document.
 3. Install Node.js:<br />
     ```sh
