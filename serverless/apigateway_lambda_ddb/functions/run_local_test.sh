@@ -36,7 +36,12 @@ docker build -t $ecr_repo -f $SHELL_PATH/$docker_file $SHELL_PATH
 
 AWS_ACCESS_KEY_ID=$(aws --profile default configure get aws_access_key_id)
 AWS_SECRET_ACCESS_KEY=$(aws --profile default configure get aws_secret_access_key)
-AWS_REGION="$(aws configure get region)"
+
+AWS_REGION="$(jq -r .context.deploymentRegion ../cdk.json)"
+if [ -z "$AWS_REGION" ]; then
+    AWS_REGION="$(aws configure get region)"
+fi
+
 DYNAMODB_TABLE="$(jq -r .context.stackName ../cdk.json)-ChatTable"
 DYNAMODB_GSI="ChatTableGSI"
 
