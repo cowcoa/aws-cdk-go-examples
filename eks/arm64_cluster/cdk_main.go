@@ -436,10 +436,49 @@ func createEksCluster(stack awscdk.Stack, vpc *awsec2.Vpc) {
 		AddonName:             jsii.String("aws-ebs-csi-driver"),
 		ClusterName:           cluster.ClusterName(),
 		ServiceAccountRoleArn: ebsCsiRole.RoleArn(),
+		AddonVersion:          jsii.String("v1.4.0-eksbuild.preview"),
 	})
 
 	awscdk.NewCfnOutput(stack, jsii.String("EksEBSCSIRoleArn"), &awscdk.CfnOutputProps{
 		Value: ebsCsiRole.RoleArn(),
+	})
+
+	// Install CoreDNS add-on
+	awseks.NewCfnAddon(stack, jsii.String("core-dns"), &awseks.CfnAddonProps{
+		AddonName:        jsii.String("coredns"),
+		ResolveConflicts: jsii.String("OVERWRITE"),
+		ClusterName:      cluster.ClusterName(),
+		AddonVersion:     jsii.String("v1.8.4-eksbuild.1"),
+	})
+
+	// Install kube-proxy add-on
+	awseks.NewCfnAddon(stack, jsii.String("kube-proxy"), &awseks.CfnAddonProps{
+		AddonName:        jsii.String("kube-proxy"),
+		ResolveConflicts: jsii.String("OVERWRITE"),
+		ClusterName:      cluster.ClusterName(),
+		AddonVersion:     jsii.String("v1.21.2-eksbuild.2"),
+	})
+
+	// Install VPC CNI add-on
+	cniRole := awsiam.NewRole(stack, jsii.String("EksCNIRole"), &awsiam.RoleProps{
+		RoleName: jsii.String(*stack.StackName() + "-EksCNIRole"),
+		AssumedBy: awsiam.NewWebIdentityPrincipal(cluster.OpenIdConnectProvider().OpenIdConnectProviderArn(), &map[string]interface{}{
+			"StringEquals": awscdk.NewCfnJson(stack, jsii.String("JsonConditionCNI"), &awscdk.CfnJsonProps{
+				Value: map[string]string{
+					*cluster.OpenIdConnectProvider().OpenIdConnectProviderIssuer() + ":sub": "system:serviceaccount:kube-system:aws-node",
+				},
+			}),
+		}),
+		ManagedPolicies: &[]awsiam.IManagedPolicy{
+			awsiam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonEKS_CNI_Policy")),
+		},
+	})
+	awseks.NewCfnAddon(stack, jsii.String("vpc-cni"), &awseks.CfnAddonProps{
+		AddonName:             jsii.String("vpc-cni"),
+		ResolveConflicts:      jsii.String("OVERWRITE"),
+		ClusterName:           cluster.ClusterName(),
+		AddonVersion:          jsii.String("v1.10.2-eksbuild.1"),
+		ServiceAccountRoleArn: cniRole.RoleArn(),
 	})
 }
 
