@@ -32,14 +32,24 @@ func ClusterName(scope constructs.Construct) string {
 }
 
 // Deployment stage config
-type DeploymentStage string
+type DeploymentStageType string
 
 const (
-	DeploymentStage_DEV  DeploymentStage = "DEV"
-	DeploymentStage_PROD DeploymentStage = "PROD"
+	DeploymentStage_DEV  DeploymentStageType = "DEV"
+	DeploymentStage_PROD DeploymentStageType = "PROD"
 )
 
-const CurrentDeploymentStage = DeploymentStage_DEV
+// DO NOT modify this function, change EKS cluster name by 'cdk-cli-wrapper-dev.sh/--context deploymentStage='.
+func DeploymentStage(scope constructs.Construct) DeploymentStageType {
+	deploymentStage := DeploymentStage_PROD
+
+	ctxValue := scope.Node().TryGetContext(jsii.String("deploymentStage"))
+	if v, ok := ctxValue.(string); ok {
+		deploymentStage = DeploymentStageType(v)
+	}
+
+	return deploymentStage
+}
 
 // VPC config
 const vpcMask = 16

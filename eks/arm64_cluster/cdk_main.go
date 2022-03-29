@@ -68,7 +68,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 
 	// Create EKS cluster.
 	subnetType := awsec2.SubnetType_PUBLIC
-	if config.CurrentDeploymentStage == config.DeploymentStage_PROD {
+	if config.DeploymentStage(stack) == config.DeploymentStage_PROD {
 		subnetType = awsec2.SubnetType_PRIVATE_WITH_NAT
 	}
 	cluster := awseks.NewCluster(stack, jsii.String("EksCluster"), &awseks.ClusterProps{

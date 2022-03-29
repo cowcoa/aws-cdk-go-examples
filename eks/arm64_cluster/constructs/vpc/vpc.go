@@ -20,7 +20,7 @@ func NewEksVpc(stack awscdk.Stack) awsec2.Vpc {
 		},
 	}
 
-	if config.CurrentDeploymentStage == config.DeploymentStage_PROD {
+	if config.DeploymentStage(stack) == config.DeploymentStage_PROD {
 		ngwNum = config.MaxAzs
 		privateSub := &awsec2.SubnetConfiguration{
 			Name:       jsii.String("PrivateSubnet"),

@@ -24,8 +24,8 @@ fi
 # CDK command pre-process.
 
 # CDK command.
-# Valid deploymentStage are: [dev, prod]
-# set -- "$@" "--context deploymentStage=dev"
+# Valid deploymentStage are: [DEV, PROD]
+set -- "$@" "-c" "deploymentStage=DEV"
 $SHELL_PATH/cdk-cli-wrapper.sh ${CDK_ACC} ${CDK_REGION} "$@"
 
 # CDK command post-process.
