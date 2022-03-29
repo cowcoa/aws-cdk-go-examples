@@ -22,6 +22,9 @@
     "@aws-cdk/core:target-partitions": [
       "aws",
       "aws-cn"
-    ]
+    ],
+    "stackName": "CDKGoExample-EKSCluster",
+    "deploymentRegion": "",
+    "clusterName": "CDKGoExample-EKSCluster"
   }
 }

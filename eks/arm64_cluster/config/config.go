@@ -2,9 +2,34 @@ package config
 
 import (
 	"strconv"
+
+	"github.com/aws/constructs-go/constructs/v10"
+	"github.com/aws/jsii-runtime-go"
 )
 
-const StackName = "CdkGolangExample-EksArm64Cluster"
+// DO NOT modify this function, change stack name by 'cdk.json/context/stackName'.
+func StackName(scope constructs.Construct) string {
+	stackName := "MyEKSClusterStack"
+
+	ctxValue := scope.Node().TryGetContext(jsii.String("stackName"))
+	if v, ok := ctxValue.(string); ok {
+		stackName = v
+	}
+
+	return stackName
+}
+
+// DO NOT modify this function, change EKS cluster name by 'cdk.json/context/clusterName'.
+func ClusterName(scope constructs.Construct) string {
+	clusterName := "MyEKSCluster"
+
+	ctxValue := scope.Node().TryGetContext(jsii.String("clusterName"))
+	if v, ok := ctxValue.(string); ok {
+		clusterName = v
+	}
+
+	return clusterName
+}
 
 // Deployment stage config
 type DeploymentStage string

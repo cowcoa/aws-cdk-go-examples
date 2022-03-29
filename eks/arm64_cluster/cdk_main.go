@@ -47,8 +47,8 @@ func NewEksCdkStack(scope constructs.Construct, id string, props *EksCdkStackPro
 }
 
 func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
-	// Create node group security group.
-	nodeSG := awsec2.NewSecurityGroup(stack, jsii.String("EksNodeSG"), &awsec2.SecurityGroupProps{
+	// Create NodeGroup security group.
+	nodeSG := awsec2.NewSecurityGroup(stack, jsii.String("NodeSG"), &awsec2.SecurityGroupProps{
 		Vpc:              vpc,
 		AllowAllOutbound: jsii.Bool(true),
 		Description:      jsii.String("EKS worker nodes communicate with each other."),
@@ -72,7 +72,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		subnetType = awsec2.SubnetType_PRIVATE_WITH_NAT
 	}
 	cluster := awseks.NewCluster(stack, jsii.String("EksCluster"), &awseks.ClusterProps{
-		ClusterName: jsii.String(*stack.StackName() + "-Cluster"),
+		ClusterName: jsii.String(config.ClusterName(stack)),
 		Version:     awseks.KubernetesVersion_V1_21(),
 		Vpc:         vpc,
 		VpcSubnets: &[]*awsec2.SubnetSelection{
@@ -87,13 +87,12 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		OutputConfigCommand: jsii.Bool(false),
 		SecurityGroup:       nodeSG, // Set additional cluster security group.
 	})
-
-	awscdk.NewCfnOutput(stack, jsii.String("EksClusterName"), &awscdk.CfnOutputProps{
+	awscdk.NewCfnOutput(stack, jsii.String("EKSClusterName"), &awscdk.CfnOutputProps{
 		Value: cluster.ClusterName(),
 	})
 
-	// Add custom node group.
-	nodeGroupLT := awsec2.NewLaunchTemplate(stack, jsii.String("EksNodeGroupLT"), &awsec2.LaunchTemplateProps{
+	// Add custom NodeGroup.
+	nodeGroupLT := awsec2.NewLaunchTemplate(stack, jsii.String("NodeGroupLT"), &awsec2.LaunchTemplateProps{
 		BlockDevices: &[]*awsec2.BlockDevice{
 			{
 				DeviceName: jsii.String("/dev/xvda"),
@@ -118,7 +117,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		RoleName: jsii.String(*stack.StackName() + "-ClusterNodeRole"),
 	})
 
-	cluster.AddNodegroupCapacity(jsii.String("NewAdd"), &awseks.NodegroupOptions{
+	cluster.AddNodegroupCapacity(jsii.String("CustomNodeGroupCapacity"), &awseks.NodegroupOptions{
 		AmiType:       awseks.NodegroupAmiType_AL2_X86_64,
 		CapacityType:  awseks.CapacityType_ON_DEMAND,
 		DesiredSize:   jsii.Number(3),
@@ -136,9 +135,9 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		},
 	})
 
-	// Mapping IAM user to K8S group.
+	// Mapping IAM user to K8s group.
 	for _, userName := range config.EksMasterUsers {
-		masterUser := awsiam.User_FromUserName(stack, jsii.String("EksMasterUser-"+userName), jsii.String(userName))
+		masterUser := awsiam.User_FromUserName(stack, jsii.String("ClusterMasterUser-"+userName), jsii.String(userName))
 		cluster.AwsAuth().AddUserMapping(masterUser, &awseks.AwsAuthMapping{
 			Groups: &[]*string{
 				jsii.String("system:masters"),
@@ -152,7 +151,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 func main() {
 	app := awscdk.NewApp(nil)
 
-	NewEksCdkStack(app, config.StackName, &EksCdkStackProps{
+	NewEksCdkStack(app, config.StackName(app), &EksCdkStackProps{
 		awscdk.StackProps{
 			Env: env(),
 		},
