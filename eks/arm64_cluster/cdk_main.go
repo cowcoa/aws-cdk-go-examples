@@ -111,10 +111,10 @@ func createEksCluster(stack awscdk.Stack, vpc *awsec2.Vpc) {
 	})
 
 	cluster.AddNodegroupCapacity(jsii.String("NewAdd"), &awseks.NodegroupOptions{
-		AmiType:       awseks.NodegroupAmiType_AL2_ARM_64,
+		AmiType:       awseks.NodegroupAmiType_AL2_X86_64,
 		CapacityType:  awseks.CapacityType_ON_DEMAND,
 		DesiredSize:   jsii.Number(3),
-		InstanceTypes: &[]awsec2.InstanceType{awsec2.InstanceType_Of(awsec2.InstanceClass_STANDARD6_GRAVITON, awsec2.InstanceSize_MEDIUM)},
+		InstanceTypes: &[]awsec2.InstanceType{awsec2.InstanceType_Of(awsec2.InstanceClass_COMPUTE5, awsec2.InstanceSize_LARGE)},
 		Labels: &map[string]*string{
 			"deployment-stage": jsii.String("dev"),
 		},
@@ -182,6 +182,264 @@ func createEksCluster(stack awscdk.Stack, vpc *awsec2.Vpc) {
 
 	awscdk.NewCfnOutput(stack, jsii.String("EksCARoleArn"), &awscdk.CfnOutputProps{
 		Value: caRole.RoleArn(),
+	})
+
+	caSa := awseks.NewServiceAccount(stack, jsii.String("ClusterAutoscaler-SA"), &awseks.ServiceAccountProps{
+		Name:      jsii.String("cluster-autoscaler-sa"),
+		Cluster:   cluster,
+		Namespace: jsii.String("kube-system"),
+	})
+
+	awsiam.NewPolicy(stack, jsii.String("CA_Policy"), &awsiam.PolicyProps{
+		Document:   caPolicy,
+		PolicyName: jsii.String(*stack.StackName() + "-CA_Policy"),
+		Roles: &[]awsiam.IRole{
+			caSa.Role(),
+		},
+	})
+
+	awseks.NewHelmChart(stack, jsii.String("clusterautoscaler-deploy"), &awseks.HelmChartProps{
+		Repository: jsii.String("https://kubernetes.github.io/autoscaler"),
+		Release:    jsii.String("cluster-autoscaler"),
+		Cluster:    cluster,
+		Chart:      jsii.String("cluster-autoscaler"),
+		Namespace:  jsii.String("kube-system"),
+		Wait:       jsii.Bool(true),
+		Version:    jsii.String("9.13.1"),
+		Values: &map[string]interface{}{
+			"cloudProvider": jsii.String("aws"),
+			"awsRegion":     jsii.String(*stack.Region()),
+			"autoDiscovery": map[string]string{
+				"clusterName": *cluster.ClusterName(),
+			},
+			"rbac": map[string]map[string]interface{}{
+				"serviceAccount": {
+					"create": jsii.Bool(false),
+					"name":   caSa.ServiceAccountName(),
+				},
+			},
+			"extraArgs": map[string]interface{}{
+				"skip-nodes-with-system-pods":   jsii.Bool(false),
+				"skip-nodes-with-local-storage": jsii.Bool(false),
+				"balance-similar-node-groups":   jsii.Bool(true),
+				// How long a node should be unneeded before it is eligible for scale down
+				"scale-down-unneeded-time": jsii.String("300s"),
+				// How long after scale up that scale down evaluation resumes
+				"scale-down-delay-after-add": jsii.String("300s"),
+			},
+		},
+	})
+
+	// Install EBS CSI driver
+	// Create IAM Policy for EBS CSI driver
+	ebsCsiPolicy := awsiam.NewPolicyDocument(&awsiam.PolicyDocumentProps{
+		AssignSids: jsii.Bool(true),
+		Statements: &[]awsiam.PolicyStatement{
+			awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+				Effect: awsiam.Effect_ALLOW,
+				Actions: &[]*string{
+					jsii.String("ec2:CreateSnapshot"),
+					jsii.String("ec2:AttachVolume"),
+					jsii.String("ec2:DetachVolume"),
+					jsii.String("ec2:ModifyVolume"),
+					jsii.String("ec2:DescribeAvailabilityZones"),
+					jsii.String("ec2:DescribeInstances"),
+					jsii.String("ec2:DescribeSnapshots"),
+					jsii.String("ec2:DescribeTags"),
+					jsii.String("ec2:DescribeVolumes"),
+					jsii.String("ec2:DescribeVolumesModifications"),
+				},
+				Resources: &[]*string{
+					jsii.String("*"),
+				},
+			}),
+			awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+				Effect: awsiam.Effect_ALLOW,
+				Actions: &[]*string{
+					jsii.String("ec2:CreateTags"),
+				},
+				Resources: &[]*string{
+					jsii.String("arn:aws:ec2:*:*:volume/*"),
+					jsii.String("arn:aws:ec2:*:*:snapshot/*"),
+				},
+				Conditions: &map[string]interface{}{
+					"StringEquals": awscdk.NewCfnJson(stack, jsii.String("JsonCondition2"), &awscdk.CfnJsonProps{
+						Value: map[string][]string{
+							"ec2:CreateAction": {
+								"CreateVolume",
+								"CreateSnapshot",
+							},
+						},
+					}),
+				},
+			}),
+			awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+				Effect: awsiam.Effect_ALLOW,
+				Actions: &[]*string{
+					jsii.String("ec2:DeleteTags"),
+				},
+				Resources: &[]*string{
+					jsii.String("arn:aws:ec2:*:*:volume/*"),
+					jsii.String("arn:aws:ec2:*:*:snapshot/*"),
+				},
+			}),
+			awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+				Effect: awsiam.Effect_ALLOW,
+				Actions: &[]*string{
+					jsii.String("ec2:CreateVolume"),
+				},
+				Resources: &[]*string{
+					jsii.String("*"),
+				},
+				Conditions: &map[string]interface{}{
+					"StringLike": awscdk.NewCfnJson(stack, jsii.String("JsonCondition3"), &awscdk.CfnJsonProps{
+						Value: map[string]string{
+							"aws:RequestTag/ebs.csi.aws.com/cluster": "true",
+						},
+					}),
+				},
+			}),
+			awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+				Effect: awsiam.Effect_ALLOW,
+				Actions: &[]*string{
+					jsii.String("ec2:CreateVolume"),
+				},
+				Resources: &[]*string{
+					jsii.String("*"),
+				},
+				Conditions: &map[string]interface{}{
+					"StringLike": awscdk.NewCfnJson(stack, jsii.String("JsonCondition4"), &awscdk.CfnJsonProps{
+						Value: map[string]string{
+							"aws:RequestTag/CSIVolumeName": "*",
+						},
+					}),
+				},
+			}),
+			awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+				Effect: awsiam.Effect_ALLOW,
+				Actions: &[]*string{
+					jsii.String("ec2:CreateVolume"),
+				},
+				Resources: &[]*string{
+					jsii.String("*"),
+				},
+				Conditions: &map[string]interface{}{
+					"StringLike": awscdk.NewCfnJson(stack, jsii.String("JsonCondition5"), &awscdk.CfnJsonProps{
+						Value: map[string]string{
+							"aws:RequestTag/kubernetes.io/cluster/*": "owned",
+						},
+					}),
+				},
+			}),
+			awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+				Effect: awsiam.Effect_ALLOW,
+				Actions: &[]*string{
+					jsii.String("ec2:DeleteVolume"),
+				},
+				Resources: &[]*string{
+					jsii.String("*"),
+				},
+				Conditions: &map[string]interface{}{
+					"StringLike": awscdk.NewCfnJson(stack, jsii.String("JsonCondition6"), &awscdk.CfnJsonProps{
+						Value: map[string]string{
+							"ec2:ResourceTag/ebs.csi.aws.com/cluster": "true",
+						},
+					}),
+				},
+			}),
+			awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+				Effect: awsiam.Effect_ALLOW,
+				Actions: &[]*string{
+					jsii.String("ec2:DeleteVolume"),
+				},
+				Resources: &[]*string{
+					jsii.String("*"),
+				},
+				Conditions: &map[string]interface{}{
+					"StringLike": awscdk.NewCfnJson(stack, jsii.String("JsonCondition7"), &awscdk.CfnJsonProps{
+						Value: map[string]string{
+							"ec2:ResourceTag/CSIVolumeName": "*",
+						},
+					}),
+				},
+			}),
+			awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+				Effect: awsiam.Effect_ALLOW,
+				Actions: &[]*string{
+					jsii.String("ec2:DeleteVolume"),
+				},
+				Resources: &[]*string{
+					jsii.String("*"),
+				},
+				Conditions: &map[string]interface{}{
+					"StringLike": awscdk.NewCfnJson(stack, jsii.String("JsonCondition8"), &awscdk.CfnJsonProps{
+						Value: map[string]string{
+							"ec2:ResourceTag/kubernetes.io/cluster/*": "owned",
+						},
+					}),
+				},
+			}),
+			awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+				Effect: awsiam.Effect_ALLOW,
+				Actions: &[]*string{
+					jsii.String("ec2:DeleteSnapshot"),
+				},
+				Resources: &[]*string{
+					jsii.String("*"),
+				},
+				Conditions: &map[string]interface{}{
+					"StringLike": awscdk.NewCfnJson(stack, jsii.String("JsonCondition9"), &awscdk.CfnJsonProps{
+						Value: map[string]string{
+							"ec2:ResourceTag/CSIVolumeSnapshotName": "*",
+						},
+					}),
+				},
+			}),
+			awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+				Effect: awsiam.Effect_ALLOW,
+				Actions: &[]*string{
+					jsii.String("ec2:DeleteSnapshot"),
+				},
+				Resources: &[]*string{
+					jsii.String("*"),
+				},
+				Conditions: &map[string]interface{}{
+					"StringLike": awscdk.NewCfnJson(stack, jsii.String("JsonCondition10"), &awscdk.CfnJsonProps{
+						Value: map[string]string{
+							"ec2:ResourceTag/ebs.csi.aws.com/cluster": "true",
+						},
+					}),
+				},
+			}),
+		},
+	})
+
+	ebsCsiConditionVal := make(map[string]string)
+	ebsCsiprovider := *cluster.OpenIdConnectProvider().OpenIdConnectProviderIssuer() + ":sub"
+	ebsCsiConditionVal[ebsCsiprovider] = "system:serviceaccount:kube-system:ebs-csi-controller-sa"
+
+	ebsCsiJsonCondition := awscdk.NewCfnJson(stack, jsii.String("JsonCondition11"), &awscdk.CfnJsonProps{
+		Value: ebsCsiConditionVal,
+	})
+
+	ebsCsiRole := awsiam.NewRole(stack, jsii.String("EksEBSCSIRole"), &awsiam.RoleProps{
+		RoleName: jsii.String(*stack.StackName() + "-EksEBSCSIRole"),
+		AssumedBy: awsiam.NewWebIdentityPrincipal(cluster.OpenIdConnectProvider().OpenIdConnectProviderArn(), &map[string]interface{}{
+			"StringEquals": &ebsCsiJsonCondition,
+		}),
+		InlinePolicies: &map[string]awsiam.PolicyDocument{
+			"EksEBSCSIPolicy": ebsCsiPolicy,
+		},
+	})
+
+	awseks.NewCfnAddon(stack, jsii.String("csi-addon"), &awseks.CfnAddonProps{
+		AddonName:             jsii.String("aws-ebs-csi-driver"),
+		ClusterName:           cluster.ClusterName(),
+		ServiceAccountRoleArn: ebsCsiRole.RoleArn(),
+	})
+
+	awscdk.NewCfnOutput(stack, jsii.String("EksEBSCSIRoleArn"), &awscdk.CfnOutputProps{
+		Value: ebsCsiRole.RoleArn(),
 	})
 }
 
