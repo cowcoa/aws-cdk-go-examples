@@ -12,34 +12,25 @@ cdk bootstrap aws://${CDK_ACC}/${CDK_REGION}
 $SHELL_PATH/cdk-cli-wrapper.sh ${CDK_ACC} ${CDK_REGION} "$@"
 
 # Deployment post process.
-eks_ca_yaml=$SHELL_PATH/cdk.out/cluster-autoscaler-autodiscover.yaml
-if [ "$CDK_CMD" == "deploy" ] && [ ! -f "$eks_ca_yaml" ]; then
+init_state_file=$SHELL_PATH/cdk.out/init.state
+if [ $? -eq 0 ] && [ "$CDK_CMD" == "deploy" ] && [ ! -f "$init_state_file" ]; then
+    # Update kubeconfig
     stack_name="$(cdk ls)"
     eks_cluster_name="$(aws cloudformation describe-stacks \
                       --stack-name ${stack_name} \
                       --query "Stacks[0].Outputs" \
                       --output json | jq -rc '.[] | select(.OutputKey=="EksClusterName") | .OutputValue '
                       )"
-    eks_ca_role_arn="$(aws cloudformation describe-stacks \
-                      --stack-name ${stack_name} \
-                      --query "Stacks[0].Outputs" \
-                      --output json | jq -rc '.[] | select(.OutputKey=="EksCARoleArn") | .OutputValue '
-                      )"
-
-    # Update kubeconfig
     aws eks update-kubeconfig --region ${CDK_REGION} --name ${eks_cluster_name}
 
-    # Install Cluster Autoscaler
-    cluster_autoscaler_version="1.21.2"
-    curl -o ${eks_ca_yaml}.origin https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
-    sed -i '/<YOUR CLUSTER NAME>/a \            - --skip-nodes-with-system-pods=false' ${eks_ca_yaml}.origin
-    sed -i '/<YOUR CLUSTER NAME>/a \            - --balance-similar-node-groups' ${eks_ca_yaml}.origin
-    sed "s/<YOUR CLUSTER NAME>/${eks_cluster_name}/g" ${eks_ca_yaml}.origin > ${eks_ca_yaml}
+    # Add the following annotation to your service accounts to use the AWS Security Token Service AWS Regional endpoint, 
+    # rather than the global endpoint.
+    kubectl annotate serviceaccount -n kube-system aws-node eks.amazonaws.com/sts-regional-endpoints=true
 
-    kubectl apply -f ${eks_ca_yaml}
-    kubectl annotate --overwrite serviceaccount cluster-autoscaler -n kube-system eks.amazonaws.com/role-arn=${eks_ca_role_arn}
-    kubectl patch deployment cluster-autoscaler -n kube-system -p '{"spec":{"template":{"metadata":{"annotations":{"cluster-autoscaler.kubernetes.io/safe-to-evict": "false"}}}}}'
-    kubectl set image deployment cluster-autoscaler -n kube-system cluster-autoscaler=k8s.gcr.io/autoscaling/cluster-autoscaler:v${cluster_autoscaler_version}
+    # Change init state.
+    if [ $? -eq 0 ]; then
+        echo "0" > $init_state_file
+    fi
 fi
 
 # Destroy post process.
