@@ -113,7 +113,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 				}),
 			},
 		},
-		KeyName:            jsii.String(config.KeyPairName),
+		KeyName:            jsii.String(config.KeyPairName(stack)),
 		LaunchTemplateName: jsii.String(*stack.StackName() + "-NodeLT"),
 		SecurityGroup:      nodeSG,
 	})

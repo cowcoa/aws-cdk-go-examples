@@ -31,6 +31,18 @@ func ClusterName(scope constructs.Construct) string {
 	return clusterName
 }
 
+// DO NOT modify this function, change EC2 key pair name by 'cdk.json/context/keyPairName'.
+func KeyPairName(scope constructs.Construct) string {
+	keyPairName := "MyKeyPair"
+
+	ctxValue := scope.Node().TryGetContext(jsii.String("keyPairName"))
+	if v, ok := ctxValue.(string); ok {
+		keyPairName = v
+	}
+
+	return keyPairName
+}
+
 // Deployment stage config
 type DeploymentStageType string
 
@@ -67,5 +79,3 @@ var EksMasterUsers = [...]string{
 	"Cow",
 	"CowAdmin",
 }
-
-const KeyPairName = "EC2-Dev-Seoul-Key-Pair"
