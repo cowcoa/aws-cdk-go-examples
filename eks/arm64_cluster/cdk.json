@@ -26,6 +26,6 @@
     "stackName": "CDKGoExample-EKSCluster",
     "deploymentRegion": "",
     "clusterName": "CDKGoExample-EKSCluster",
-    "keyPairName": "zxaws-aws-ap-northeast-1-key-pair"
+    "keyPairName": ""
   }
 }

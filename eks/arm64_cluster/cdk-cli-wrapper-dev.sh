@@ -34,10 +34,11 @@ fi
 # Valid deploymentStage are: [DEV, PROD]
 set -- "$@" "-c" "deploymentStage=DEV"
 $SHELL_PATH/cdk-cli-wrapper.sh ${CDK_ACC} ${CDK_REGION} "$@"
+cdk_exec_result=$?
 
 # CDK command post-process.
 init_state_file=$SHELL_PATH/cdk.out/init.state
-if [ $? -eq 0 ] && [ "$CDK_CMD" == "deploy" ] && [ ! -f "$init_state_file" ]; then
+if [ $cdk_exec_result -eq 0 ] && [ "$CDK_CMD" == "deploy" ] && [ ! -f "$init_state_file" ]; then
     # Update kubeconfig
     echo "Update kubeconfig..."
     stack_name="$(jq -r .context.stackName ./cdk.json)"
@@ -53,10 +54,12 @@ if [ $? -eq 0 ] && [ "$CDK_CMD" == "deploy" ] && [ ! -f "$init_state_file" ]; th
     if [ $? -eq 0 ]; then
         echo "Update init state..."
         echo $(date '+%Y.%m.%d.%H%M%S' -d '+8 hours') > $init_state_file
+        echo "The first deployment is complete."
+        echo ""
     fi
 fi
 
 # Destroy post-process.
-if [ "$CDK_CMD" == "destroy" ]; then
+if [ $cdk_exec_result -eq 0 ] && [ "$CDK_CMD" == "destroy" ]; then
     rm -rf $SHELL_PATH/cdk.out/
 fi

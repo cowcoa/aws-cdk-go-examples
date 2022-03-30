@@ -101,8 +101,8 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		Value: cluster.ClusterName(),
 	})
 
-	// Add custom NodeGroup.
-	nodeGroupLT := awsec2.NewLaunchTemplate(stack, jsii.String("NodeGroupLT"), &awsec2.LaunchTemplateProps{
+	// Create custom Nodegroup Launch Template.
+	ltProps := awsec2.LaunchTemplateProps{
 		BlockDevices: &[]*awsec2.BlockDevice{
 			{
 				DeviceName: jsii.String("/dev/xvda"),
@@ -113,11 +113,15 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 				}),
 			},
 		},
-		KeyName:            jsii.String(config.KeyPairName(stack)),
 		LaunchTemplateName: jsii.String(*stack.StackName() + "-NodeLT"),
 		SecurityGroup:      nodeSG,
-	})
+	}
+	if len(config.KeyPairName(stack)) > 0 {
+		ltProps.KeyName = jsii.String(config.KeyPairName(stack))
+	}
+	nodeGroupLT := awsec2.NewLaunchTemplate(stack, jsii.String("NodeGroupLT"), &ltProps)
 
+	// Create cluster node role.
 	clusterNodeRole := awsiam.NewRole(stack, jsii.String("ClusterNodeRole"), &awsiam.RoleProps{
 		AssumedBy: awsiam.NewServicePrincipal(jsii.String("ec2.amazonaws.com"), &awsiam.ServicePrincipalOpts{}),
 		ManagedPolicies: &[]awsiam.IManagedPolicy{
@@ -127,6 +131,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		RoleName: jsii.String(*stack.StackName() + "-ClusterNodeRole"),
 	})
 
+	// Add custom NodeGroup.
 	cluster.AddNodegroupCapacity(jsii.String("CustomNodeGroupCapacity"), &awseks.NodegroupOptions{
 		AmiType:       awseks.NodegroupAmiType_AL2_X86_64,
 		CapacityType:  awseks.CapacityType_ON_DEMAND,
