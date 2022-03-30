@@ -138,7 +138,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		LaunchTemplateSpec: &awseks.LaunchTemplateSpec{Id: nodeGroupLT.LaunchTemplateId(), Version: nodeGroupLT.LatestVersionNumber()},
 		MaxSize:            jsii.Number(5),
 		MinSize:            jsii.Number(2),
-		NodegroupName:      jsii.String(*stack.StackName() + "-CustomNodeGroup"),
+		NodegroupName:      jsii.String("CustomNodeGroup"),
 		NodeRole:           clusterNodeRole,
 		Subnets: &awsec2.SubnetSelection{
 			SubnetType: subnetType,

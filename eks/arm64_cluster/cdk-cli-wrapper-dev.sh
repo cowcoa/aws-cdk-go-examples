@@ -39,17 +39,20 @@ $SHELL_PATH/cdk-cli-wrapper.sh ${CDK_ACC} ${CDK_REGION} "$@"
 init_state_file=$SHELL_PATH/cdk.out/init.state
 if [ $? -eq 0 ] && [ "$CDK_CMD" == "deploy" ] && [ ! -f "$init_state_file" ]; then
     # Update kubeconfig
+    echo "Update kubeconfig..."
     stack_name="$(jq -r .context.stackName ./cdk.json)"
     eks_cluster_name="$(jq -r .context.clusterName ./cdk.json)"
     aws eks update-kubeconfig --region ${CDK_REGION} --name ${eks_cluster_name}
 
     # Add the following annotation to your service accounts to use the AWS Security Token Service AWS Regional endpoint, 
     # rather than the global endpoint.
+    echo "Update service account annotate..."
     kubectl annotate serviceaccount -n kube-system aws-node eks.amazonaws.com/sts-regional-endpoints=true
 
     # Change init state.
     if [ $? -eq 0 ]; then
-        echo "0" > $init_state_file
+        echo "Update init state..."
+        echo $(date '+%Y.%m.%d.%H%M%S' -d '+8 hours') > $init_state_file
     fi
 fi
 
