@@ -28,6 +28,26 @@ Example projects for AWS CDK implemented in Golang.
 [Download and Install]: <https://go.dev/doc/install>
 [Install Docker Engine]: <https://docs.docker.com/engine/install/>
 
+## Deployment
+Run the following command to deploy AWS infra and code by CDK Toolkit:<br />
+  ```sh
+  cdk-cli-wrapper-dev.sh deploy
+  ```
+If all goes well, you will see output like below:<br />
+  ```sh
+  Outputs:
+  CDKGoExample-ABC = XYZ
+  Stack ARN:
+  arn:aws:cloudformation:ap-northeast-2:123456789012:stack/CDKGoExample-ABC/225b9050-a414-11ec-b5c2-0ab842e4df54
+  
+  ✨  Total time: 133.05s
+  ```
+You can also clean up the deployment by running command:<br />
+  ```sh
+  cdk-cli-wrapper-dev.sh destroy
+  ```
+cdk-cli-wrapper-dev.sh is a wrapper script for CDK command to which you can pass any CDK command line arguments.
+
 ## Examples
 
 This page contains list of examples.
