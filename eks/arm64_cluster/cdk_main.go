@@ -51,7 +51,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 	nodeSG := awsec2.NewSecurityGroup(stack, jsii.String("NodeSG"), &awsec2.SecurityGroupProps{
 		Vpc:              vpc,
 		AllowAllOutbound: jsii.Bool(true),
-		Description:      jsii.String("EKS worker nodes communicate with each other."),
+		Description:      jsii.String("EKS worker nodes communicate with external."),
 	})
 	nodeSG.Connections().AllowFrom(nodeSG, awsec2.Port_AllTraffic(),
 		jsii.String("Allow all nodes communicate each other with the this SG."))
@@ -59,11 +59,21 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		awsec2.Peer_AnyIpv4(),
 		awsec2.NewPort(&awsec2.PortProps{
 			Protocol:             awsec2.Protocol_TCP,
-			FromPort:             jsii.Number(3000),
-			ToPort:               jsii.Number(9000),
-			StringRepresentation: jsii.String("Receive HTTP(s) based request"),
+			FromPort:             jsii.Number(30000),
+			ToPort:               jsii.Number(32767),
+			StringRepresentation: jsii.String("Receive K8s NodePort requests."),
 		}),
-		jsii.String("Allow testing requests"),
+		jsii.String("Allow requests to K8s NodePort range."),
+		jsii.Bool(false))
+	nodeSG.AddIngressRule(
+		awsec2.Peer_AnyIpv4(),
+		awsec2.NewPort(&awsec2.PortProps{
+			Protocol:             awsec2.Protocol_TCP,
+			FromPort:             jsii.Number(8000),
+			ToPort:               jsii.Number(9000),
+			StringRepresentation: jsii.String("Receive HTTP requests."),
+		}),
+		jsii.String("Allow requests to common app range."),
 		jsii.Bool(false))
 
 	// Create EKS cluster.
@@ -127,7 +137,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		},
 		LaunchTemplateSpec: &awseks.LaunchTemplateSpec{Id: nodeGroupLT.LaunchTemplateId(), Version: nodeGroupLT.LatestVersionNumber()},
 		MaxSize:            jsii.Number(5),
-		MinSize:            jsii.Number(1),
+		MinSize:            jsii.Number(2),
 		NodegroupName:      jsii.String(*stack.StackName() + "-CustomNodeGroup"),
 		NodeRole:           clusterNodeRole,
 		Subnets: &awsec2.SubnetSelection{
