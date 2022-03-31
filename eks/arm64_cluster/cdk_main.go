@@ -99,26 +99,6 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		Value: cluster.ClusterName(),
 	})
 
-	// Create custom Nodegroup Launch Template.
-	ltProps := awsec2.LaunchTemplateProps{
-		BlockDevices: &[]*awsec2.BlockDevice{
-			{
-				DeviceName: jsii.String("/dev/xvda"),
-				Volume: awsec2.BlockDeviceVolume_Ebs(jsii.Number(100), &awsec2.EbsDeviceOptions{
-					DeleteOnTermination: jsii.Bool(true),
-					VolumeType:          awsec2.EbsDeviceVolumeType_GP2,
-					Encrypted:           jsii.Bool(false),
-				}),
-			},
-		},
-		LaunchTemplateName: jsii.String(*stack.StackName() + "-NodeLT"),
-		SecurityGroup:      nodeSG,
-	}
-	if len(config.KeyPairName(stack)) > 0 {
-		ltProps.KeyName = jsii.String(config.KeyPairName(stack))
-	}
-	nodeGroupLT := awsec2.NewLaunchTemplate(stack, jsii.String("NodeGroupLT"), &ltProps)
-
 	// Create cluster node role.
 	clusterNodeRole := awsiam.NewRole(stack, jsii.String("ClusterNodeRole"), &awsiam.RoleProps{
 		AssumedBy: awsiam.NewServicePrincipal(jsii.String("ec2.amazonaws.com"), &awsiam.ServicePrincipalOpts{}),
@@ -129,19 +109,105 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		RoleName: jsii.String(*stack.StackName() + "-ClusterNodeRole"),
 	})
 
-	// Add custom NodeGroup.
-	cluster.AddNodegroupCapacity(jsii.String("CustomNodeGroupCapacity"), &awseks.NodegroupOptions{
+	// Create custom Nodegroup Launch Template 1.
+	var keyPair *string = nil
+	if len(config.KeyPairName(stack)) > 0 {
+		keyPair = jsii.String(config.KeyPairName(stack))
+	}
+
+	lt1Props := awsec2.LaunchTemplateProps{
+		BlockDevices: &[]*awsec2.BlockDevice{
+			{
+				DeviceName: jsii.String("/dev/xvda"),
+				Volume: awsec2.BlockDeviceVolume_Ebs(jsii.Number(100), &awsec2.EbsDeviceOptions{
+					DeleteOnTermination: jsii.Bool(true),
+					VolumeType:          awsec2.EbsDeviceVolumeType_GP2,
+					Encrypted:           jsii.Bool(false),
+				}),
+			},
+		},
+		LaunchTemplateName: jsii.String(*stack.StackName() + "-NodeLT1"),
+		SecurityGroup:      nodeSG,
+		KeyName:            keyPair,
+	}
+	nodeGroupLT1 := awsec2.NewLaunchTemplate(stack, jsii.String("NodeGroupLT1"), &lt1Props)
+
+	// Add custom Nodegroup 1.
+	cluster.AddNodegroupCapacity(jsii.String("CustomNodeGroupCapacity1"), &awseks.NodegroupOptions{
 		AmiType:       awseks.NodegroupAmiType_AL2_X86_64,
 		CapacityType:  awseks.CapacityType_ON_DEMAND,
-		DesiredSize:   jsii.Number(3),
+		DesiredSize:   jsii.Number(2),
 		InstanceTypes: &[]awsec2.InstanceType{awsec2.InstanceType_Of(awsec2.InstanceClass_COMPUTE5, awsec2.InstanceSize_LARGE)},
 		Labels: &map[string]*string{
 			"deployment-stage": jsii.String("dev"),
 		},
-		LaunchTemplateSpec: &awseks.LaunchTemplateSpec{Id: nodeGroupLT.LaunchTemplateId(), Version: nodeGroupLT.LatestVersionNumber()},
-		MaxSize:            jsii.Number(5),
-		MinSize:            jsii.Number(2),
-		NodegroupName:      jsii.String("CustomNodeGroup"),
+		LaunchTemplateSpec: &awseks.LaunchTemplateSpec{Id: nodeGroupLT1.LaunchTemplateId(), Version: nodeGroupLT1.LatestVersionNumber()},
+		MaxSize:            jsii.Number(3),
+		MinSize:            jsii.Number(1),
+		NodegroupName:      jsii.String("CustomNodeGroup1"),
+		NodeRole:           clusterNodeRole,
+		Subnets: &awsec2.SubnetSelection{
+			SubnetType: subnetType,
+		},
+	})
+
+	// Create custom Nodegroup Launch Template 2.
+	lt2Props := awsec2.CfnLaunchTemplateProps{
+		LaunchTemplateData: awsec2.CfnLaunchTemplate_LaunchTemplateDataProperty{
+			BlockDeviceMappings: &[]*awsec2.CfnLaunchTemplate_BlockDeviceMappingProperty{
+				{
+					DeviceName: jsii.String("/dev/xvda"),
+					Ebs: awsec2.CfnLaunchTemplate_EbsProperty{
+						DeleteOnTermination: jsii.Bool(true),
+						VolumeType:          jsii.String("gp2"),
+						Encrypted:           jsii.Bool(false),
+					},
+				},
+			},
+			SecurityGroups: &[]*string{
+				nodeSG.PhysicalName(),
+			},
+			KeyName: keyPair,
+			TagSpecifications: &[]*awsec2.CfnLaunchTemplate_TagSpecificationProperty{
+				{
+					ResourceType: jsii.String("instance"),
+					Tags: &[]*awscdk.CfnTag{
+						{
+							Key:   jsii.String("Name"),
+							Value: jsii.String(config.StackName(stack) + "/NodeGroupLT2"),
+						},
+					},
+				},
+			},
+		},
+		LaunchTemplateName: jsii.String(*stack.StackName() + "-NodeLT2"),
+		TagSpecifications: &[]*awsec2.CfnLaunchTemplate_LaunchTemplateTagSpecificationProperty{
+			{
+				ResourceType: jsii.String("launch-template"),
+				Tags: &[]*awscdk.CfnTag{
+					{
+						Key:   jsii.String("MyLTName"),
+						Value: jsii.String("CowLT"),
+					},
+				},
+			},
+		},
+	}
+	nodeGroupLT2 := awsec2.NewCfnLaunchTemplate(stack, jsii.String("NodeGroupLT2"), &lt2Props)
+
+	// Add custom Nodegroup 2.
+	cluster.AddNodegroupCapacity(jsii.String("CustomNodeGroupCapacity2"), &awseks.NodegroupOptions{
+		AmiType:       awseks.NodegroupAmiType_AL2_X86_64,
+		CapacityType:  awseks.CapacityType_ON_DEMAND,
+		DesiredSize:   jsii.Number(2),
+		InstanceTypes: &[]awsec2.InstanceType{awsec2.InstanceType_Of(awsec2.InstanceClass_COMPUTE5, awsec2.InstanceSize_LARGE)},
+		Labels: &map[string]*string{
+			"deployment-stage": jsii.String("dev"),
+		},
+		LaunchTemplateSpec: &awseks.LaunchTemplateSpec{Id: nodeGroupLT2.Ref(), Version: nodeGroupLT2.AttrLatestVersionNumber()},
+		MaxSize:            jsii.Number(3),
+		MinSize:            jsii.Number(1),
+		NodegroupName:      jsii.String("CustomNodeGroup2"),
 		NodeRole:           clusterNodeRole,
 		Subnets: &awsec2.SubnetSelection{
 			SubnetType: subnetType,
