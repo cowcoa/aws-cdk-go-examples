@@ -42,6 +42,7 @@ func NewEksCdkStack(scope constructs.Construct, id string, props *EksCdkStackPro
 	addons.NewEksVpcCni(stack, cluster)
 	addons.NewEksEbsCsiDriver(stack, cluster)
 	addons.NewEksClusterAutoscaler(stack, cluster)
+	addons.NewEksLoadBalancerController(stack, cluster)
 
 	return stack
 }
@@ -90,10 +91,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 				SubnetType: subnetType,
 			},
 		},
-		DefaultCapacity: jsii.Number(0), // Disable creation of default node group.
-		AlbController: &awseks.AlbControllerOptions{
-			Version: awseks.AlbControllerVersion_V2_3_1(),
-		},
+		DefaultCapacity:     jsii.Number(0), // Disable creation of default node group.
 		OutputConfigCommand: jsii.Bool(false),
 		SecurityGroup:       nodeSG, // Set additional cluster security group.
 	})
