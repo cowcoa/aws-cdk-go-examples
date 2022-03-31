@@ -8,6 +8,7 @@ import (
 )
 
 // Install AWS Load Balancer Controller
+// https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html
 func NewEksLoadBalancerController(stack awscdk.Stack, cluster awseks.Cluster) {
 	// Create IAM Policy for AWS Load Balancer Controller
 	lbcPolicy := awsiam.NewPolicyDocument(&awsiam.PolicyDocumentProps{
@@ -306,9 +307,11 @@ func NewEksLoadBalancerController(stack awscdk.Stack, cluster awseks.Cluster) {
 			"serviceAccount": map[string]interface{}{
 				"create": jsii.Bool(false),
 				"name":   lbcSa.ServiceAccountName(),
-				"annotations": map[string]string{
-					"eks.amazonaws.com/sts-regional-endpoints": "true",
-				},
+				/*
+					"annotations": map[string]interface{}{
+						"eks.amazonaws.com/sts-regional-endpoints": jsii.Bool(true),
+					},
+				*/
 			},
 		},
 	})

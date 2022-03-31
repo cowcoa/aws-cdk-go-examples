@@ -49,6 +49,7 @@ if [ $cdk_exec_result -eq 0 ] && [ "$CDK_CMD" == "deploy" ] && [ ! -f "$init_sta
     # rather than the global endpoint.
     echo "Update service account annotate..."
     kubectl annotate serviceaccount -n kube-system aws-node eks.amazonaws.com/sts-regional-endpoints=true
+    kubectl annotate serviceaccount -n kube-system aws-load-balancer-controller eks.amazonaws.com/sts-regional-endpoints=true
 
     # Change init state.
     if [ $? -eq 0 ]; then
