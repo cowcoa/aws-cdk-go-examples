@@ -1,6 +1,7 @@
 package config
 
 import (
+	"reflect"
 	"strconv"
 
 	"github.com/aws/constructs-go/constructs/v10"
@@ -43,6 +44,25 @@ func KeyPairName(scope constructs.Construct) string {
 	return keyPairName
 }
 
+// Master users in k8s system:masters. All users must be existing IAM Users
+// DO NOT modify this function, change master IAM users by 'cdk.json/context/masterUsers'.
+func MasterUsers(scope constructs.Construct) []string {
+	var masterUsers []string
+
+	ctxValue := scope.Node().TryGetContext(jsii.String("masterUsers"))
+	iamUsers := reflect.ValueOf(ctxValue)
+	if iamUsers.Kind() != reflect.Slice {
+		return masterUsers
+	}
+
+	for i := 0; i < iamUsers.Len(); i++ {
+		user := iamUsers.Index(i).Interface().(string)
+		masterUsers = append(masterUsers, user)
+	}
+
+	return masterUsers
+}
+
 // Deployment stage config
 type DeploymentStageType string
 
@@ -71,11 +91,3 @@ var VpcCidr = vpcIpv4 + "/" + strconv.Itoa(vpcMask)
 
 const MaxAzs = 3
 const SubnetMask = vpcMask + MaxAzs
-
-// EKS config
-// We are going to create K8S version 1.21, Graviton 2 cluster.
-// NOTE: All listed IAM users MUST already exist.
-var EksMasterUsers = [...]string{
-	"Cow",
-	"CowAdmin",
-}

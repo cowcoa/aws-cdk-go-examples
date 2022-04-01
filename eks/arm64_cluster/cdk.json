@@ -26,6 +26,10 @@
     "stackName": "CDKGoExample-EKSCluster",
     "deploymentRegion": "",
     "clusterName": "CDKGoExample-EKSCluster",
-    "keyPairName": ""
+    "keyPairName": "",
+    "masterUsers": [
+      "Cow",
+      "CowAdmin"
+    ]
   }
 }

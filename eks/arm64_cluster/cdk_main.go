@@ -201,7 +201,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 	})
 
 	// Mapping IAM user to K8s group.
-	for _, userName := range config.EksMasterUsers {
+	for _, userName := range config.MasterUsers(stack) {
 		masterUser := awsiam.User_FromUserName(stack, jsii.String("ClusterMasterUser-"+userName), jsii.String(userName))
 		cluster.AwsAuth().AddUserMapping(masterUser, &awseks.AwsAuthMapping{
 			Groups: &[]*string{
