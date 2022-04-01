@@ -43,6 +43,7 @@ func NewEksCdkStack(scope constructs.Construct, id string, props *EksCdkStackPro
 	addons.NewEksEbsCsiDriver(stack, cluster)
 	addons.NewEksClusterAutoscaler(stack, cluster)
 	addons.NewEksLoadBalancerController(stack, cluster)
+	addons.NewEksNodeTerminationHandler(stack, cluster)
 
 	return stack
 }
@@ -98,7 +99,6 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 	awscdk.NewCfnOutput(stack, jsii.String("EKSClusterName"), &awscdk.CfnOutputProps{
 		Value: cluster.ClusterName(),
 	})
-
 	// Create cluster node role.
 	clusterNodeRole := awsiam.NewRole(stack, jsii.String("ClusterNodeRole"), &awsiam.RoleProps{
 		AssumedBy: awsiam.NewServicePrincipal(jsii.String("ec2.amazonaws.com"), &awsiam.ServicePrincipalOpts{}),
@@ -133,9 +133,9 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 	})
 	// Add custom Nodegroup 1.
 	cluster.AddNodegroupCapacity(jsii.String("CustomNodeGroupCapacity1"), &awseks.NodegroupOptions{
-		AmiType:       awseks.NodegroupAmiType_AL2_X86_64,
-		CapacityType:  awseks.CapacityType_ON_DEMAND,
-		DesiredSize:   jsii.Number(2),
+		AmiType:      awseks.NodegroupAmiType_AL2_X86_64,
+		CapacityType: awseks.CapacityType_ON_DEMAND,
+		// DesiredSize:   jsii.Number(2),
 		InstanceTypes: &[]awsec2.InstanceType{awsec2.InstanceType_Of(awsec2.InstanceClass_COMPUTE5, awsec2.InstanceSize_LARGE)},
 		Labels: &map[string]*string{
 			"deployment-stage": jsii.String(string(config.DeploymentStage(stack))),
@@ -183,9 +183,9 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 	})
 	// Add custom Nodegroup 2.
 	cluster.AddNodegroupCapacity(jsii.String("CustomNodeGroupCapacity2"), &awseks.NodegroupOptions{
-		AmiType:       awseks.NodegroupAmiType_AL2_X86_64,
-		CapacityType:  awseks.CapacityType_ON_DEMAND,
-		DesiredSize:   jsii.Number(2),
+		AmiType:      awseks.NodegroupAmiType_AL2_X86_64,
+		CapacityType: awseks.CapacityType_SPOT,
+		// DesiredSize:   jsii.Number(2),
 		InstanceTypes: &[]awsec2.InstanceType{awsec2.InstanceType_Of(awsec2.InstanceClass_COMPUTE5, awsec2.InstanceSize_LARGE)},
 		Labels: &map[string]*string{
 			"deployment-stage": jsii.String(string(config.DeploymentStage(stack))),
