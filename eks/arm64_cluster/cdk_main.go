@@ -115,8 +115,8 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		keyPair = jsii.String(config.KeyPairName(stack))
 	}
 
-	// Create custom Nodegroup Launch Template 1.
-	nodeGroupLT1 := awsec2.NewLaunchTemplate(stack, jsii.String("NodeGroupLT1"), &awsec2.LaunchTemplateProps{
+	// Create On-Demand Instance Nodegroup Launch Template.
+	onDemandNgLt := awsec2.NewLaunchTemplate(stack, jsii.String("OnDemandNodegroupLT"), &awsec2.LaunchTemplateProps{
 		BlockDevices: &[]*awsec2.BlockDevice{
 			{
 				DeviceName: jsii.String("/dev/xvda"),
@@ -127,12 +127,12 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 				}),
 			},
 		},
-		LaunchTemplateName: jsii.String(*stack.StackName() + "-NodeLT1"),
+		LaunchTemplateName: jsii.String(*stack.StackName() + "-OnDemandNodegroupLT"),
 		SecurityGroup:      nodeSG,
 		KeyName:            keyPair,
 	})
-	// Add custom Nodegroup 1.
-	cluster.AddNodegroupCapacity(jsii.String("CustomNodeGroupCapacity1"), &awseks.NodegroupOptions{
+	// Add On-Demand Instance Nodegroup.
+	cluster.AddNodegroupCapacity(jsii.String("OnDemandNodegroup"), &awseks.NodegroupOptions{
 		AmiType:      awseks.NodegroupAmiType_AL2_X86_64,
 		CapacityType: awseks.CapacityType_ON_DEMAND,
 		// DesiredSize:   jsii.Number(2),
@@ -140,18 +140,18 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		Labels: &map[string]*string{
 			"deployment-stage": jsii.String(string(config.DeploymentStage(stack))),
 		},
-		LaunchTemplateSpec: &awseks.LaunchTemplateSpec{Id: nodeGroupLT1.LaunchTemplateId(), Version: nodeGroupLT1.LatestVersionNumber()},
+		LaunchTemplateSpec: &awseks.LaunchTemplateSpec{Id: onDemandNgLt.LaunchTemplateId(), Version: onDemandNgLt.LatestVersionNumber()},
 		MaxSize:            jsii.Number(3),
 		MinSize:            jsii.Number(1),
-		NodegroupName:      jsii.String("CustomNodeGroup1"),
+		NodegroupName:      jsii.String("OnDemandNodegroup"),
 		NodeRole:           clusterNodeRole,
 		Subnets: &awsec2.SubnetSelection{
 			SubnetType: subnetType,
 		},
 	})
 
-	// Create custom Nodegroup Launch Template 2.
-	nodeGroupLT2 := awsec2.NewCfnLaunchTemplate(stack, jsii.String("NodeGroupLT2"), &awsec2.CfnLaunchTemplateProps{
+	// Create Spot Instance Nodegroup Launch Template.
+	spotNgLt := awsec2.NewCfnLaunchTemplate(stack, jsii.String("SpotNodegroupLT"), &awsec2.CfnLaunchTemplateProps{
 		LaunchTemplateData: awsec2.CfnLaunchTemplate_LaunchTemplateDataProperty{
 			BlockDeviceMappings: &[]*awsec2.CfnLaunchTemplate_BlockDeviceMappingProperty{
 				{
@@ -173,16 +173,16 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 					Tags: &[]*awscdk.CfnTag{
 						{
 							Key:   jsii.String("Name"),
-							Value: jsii.String(config.StackName(stack) + "/NodeGroupLT2"),
+							Value: jsii.String(config.StackName(stack) + "/SpotNodegroupLT"),
 						},
 					},
 				},
 			},
 		},
-		LaunchTemplateName: jsii.String(*stack.StackName() + "-NodeLT2"),
+		LaunchTemplateName: jsii.String(*stack.StackName() + "-SpotNodegroupLT"),
 	})
-	// Add custom Nodegroup 2.
-	cluster.AddNodegroupCapacity(jsii.String("CustomNodeGroupCapacity2"), &awseks.NodegroupOptions{
+	// Add Spot Instance Nodegroup.
+	cluster.AddNodegroupCapacity(jsii.String("SpotNodegroup"), &awseks.NodegroupOptions{
 		AmiType:      awseks.NodegroupAmiType_AL2_X86_64,
 		CapacityType: awseks.CapacityType_SPOT,
 		// DesiredSize:   jsii.Number(2),
@@ -190,10 +190,10 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		Labels: &map[string]*string{
 			"deployment-stage": jsii.String(string(config.DeploymentStage(stack))),
 		},
-		LaunchTemplateSpec: &awseks.LaunchTemplateSpec{Id: nodeGroupLT2.Ref(), Version: nodeGroupLT2.AttrLatestVersionNumber()},
+		LaunchTemplateSpec: &awseks.LaunchTemplateSpec{Id: spotNgLt.Ref(), Version: spotNgLt.AttrLatestVersionNumber()},
 		MaxSize:            jsii.Number(3),
 		MinSize:            jsii.Number(1),
-		NodegroupName:      jsii.String("CustomNodeGroup2"),
+		NodegroupName:      jsii.String("SpotNodegroup"),
 		NodeRole:           clusterNodeRole,
 		Subnets: &awsec2.SubnetSelection{
 			SubnetType: subnetType,
