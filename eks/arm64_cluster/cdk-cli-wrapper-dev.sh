@@ -50,6 +50,7 @@ if [ $cdk_exec_result -eq 0 ] && [ "$CDK_CMD" == "deploy" ] && [ ! -f "$init_sta
     echo "Update service account annotate..."
     kubectl annotate serviceaccount -n kube-system aws-node eks.amazonaws.com/sts-regional-endpoints=true
     kubectl annotate serviceaccount -n kube-system aws-load-balancer-controller eks.amazonaws.com/sts-regional-endpoints=true
+    kubectl patch deployment cluster-autoscaler-aws-cluster-autoscaler -n kube-system -p '{"spec":{"template":{"metadata":{"annotations":{"cluster-autoscaler.kubernetes.io/safe-to-evict": "false"}}}}}'
 
     # Change init state.
     if [ $? -eq 0 ]; then

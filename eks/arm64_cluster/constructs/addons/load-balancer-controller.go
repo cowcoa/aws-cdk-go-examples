@@ -288,6 +288,8 @@ func NewEksLoadBalancerController(stack awscdk.Stack, cluster awseks.Cluster) {
 	})
 
 	// https://github.com/kubernetes-sigs/aws-load-balancer-controller/tree/main/helm/aws-load-balancer-controller
+	// TODO: --set image.repository=
+	// TODO: https://docs.aws.amazon.com/eks/latest/userguide/add-ons-images.html
 	lbcChart := awseks.NewHelmChart(stack, jsii.String("AWSLoadBalancerControllerChart"), &awseks.HelmChartProps{
 		Repository:      jsii.String("https://aws.github.io/eks-charts"),
 		Release:         jsii.String("aws-load-balancer-controller"),

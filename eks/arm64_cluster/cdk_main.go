@@ -163,8 +163,8 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 					},
 				},
 			},
-			SecurityGroups: &[]*string{
-				nodeSG.PhysicalName(),
+			SecurityGroupIds: &[]*string{
+				nodeSG.SecurityGroupId(),
 			},
 			KeyName: keyPair,
 			TagSpecifications: &[]*awsec2.CfnLaunchTemplate_TagSpecificationProperty{

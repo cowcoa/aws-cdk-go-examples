@@ -74,6 +74,8 @@ func NewEksClusterAutoscaler(stack awscdk.Stack, cluster awseks.Cluster) {
 				"scale-down-unneeded-time": jsii.String("300s"),
 				// How long after scale up that scale down evaluation resumes
 				"scale-down-delay-after-add": jsii.String("300s"),
+				// selects the node group that will have the least idle CPU (if tied, unused memory) after scale-up.
+				"expander": jsii.String("least-waste"),
 			},
 		},
 	})
