@@ -46,9 +46,6 @@ func NewEksCdkStack(scope constructs.Construct, id string, props *EksCdkStackPro
 	addons.NewEksNodeTerminationHandler(stack, cluster)
 	addons.NewEksExternalDNS(stack, cluster)
 
-	// Create Ingress/Service external DNS resources.
-	//config.InitExternalDns(stack, cluster)
-
 	return stack
 }
 

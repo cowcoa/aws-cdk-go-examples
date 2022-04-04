@@ -74,7 +74,7 @@ func NewEksExternalDNS(stack awscdk.Stack, cluster awseks.Cluster) {
 		},
 	})
 
-	// You need to update the target role's Principal of trust policy with this ARN
+	// If your ExternalDNS cross account access role. You need to update the target role's Principal of trust policy with this ARN
 	awscdk.NewCfnOutput(stack, jsii.String("ExternalDNSRoleArn"), &awscdk.CfnOutputProps{
 		Value: externalDnsSa.Role().RoleArn(),
 	})
