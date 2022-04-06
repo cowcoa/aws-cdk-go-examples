@@ -45,6 +45,7 @@ func NewEksCdkStack(scope constructs.Construct, id string, props *EksCdkStackPro
 	addons.NewEksLoadBalancerController(stack, cluster)
 	addons.NewEksNodeTerminationHandler(stack, cluster)
 	addons.NewEksExternalDNS(stack, cluster)
+	addons.NewEksMetricsServer(stack, cluster)
 
 	return stack
 }
@@ -79,11 +80,12 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		jsii.String("Allow requests to common app range."),
 		jsii.Bool(false))
 
-	// Create EKS cluster.
+	// Creating Nodegroup in private subnet only when deployment cluster in PROD stage.
 	subnetType := awsec2.SubnetType_PUBLIC
 	if config.DeploymentStage(stack) == config.DeploymentStage_PROD {
 		subnetType = awsec2.SubnetType_PRIVATE_WITH_NAT
 	}
+	// Create EKS cluster.
 	cluster := awseks.NewCluster(stack, jsii.String("EksCluster"), &awseks.ClusterProps{
 		ClusterName: jsii.String(config.ClusterName(stack)),
 		Version:     awseks.KubernetesVersion_V1_21(),

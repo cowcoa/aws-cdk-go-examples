@@ -79,7 +79,6 @@ func NewEksExternalDNS(stack awscdk.Stack, cluster awseks.Cluster) {
 		Value: externalDnsSa.Role().RoleArn(),
 	})
 
-	// https://github.com/kubernetes-sigs/external-dns/tree/master/charts/external-dns
 	// https://github.com/bitnami/charts/tree/master/bitnami/external-dns
 	externalDnsChart := awseks.NewHelmChart(stack, jsii.String("ExternalDNSChart"), &awseks.HelmChartProps{
 		Repository:      jsii.String("https://charts.bitnami.com/bitnami"),
