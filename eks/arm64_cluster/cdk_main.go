@@ -46,6 +46,7 @@ func NewEksCdkStack(scope constructs.Construct, id string, props *EksCdkStackPro
 	addons.NewEksNodeTerminationHandler(stack, cluster)
 	addons.NewEksExternalDNS(stack, cluster)
 	addons.NewEksMetricsServer(stack, cluster)
+	addons.NewEksAwsXray(stack, cluster)
 
 	return stack
 }
