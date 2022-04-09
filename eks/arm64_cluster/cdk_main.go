@@ -48,6 +48,7 @@ func NewEksCdkStack(scope constructs.Construct, id string, props *EksCdkStackPro
 	addons.NewEksMetricsServer(stack, cluster)
 	addons.NewEksAwsXray(stack, cluster)
 	addons.NewEksCloudWatchMetrics(stack, cluster)
+	addons.NewEksFluentBit(stack, cluster)
 
 	return stack
 }
