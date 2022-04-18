@@ -25,6 +25,7 @@
     ],
     "stackName": "CDKGoExample-EKSCluster",
     "deploymentRegion": "",
+    "targetArch": "x86_64",
     "clusterName": "CDKGoExample-EKSCluster",
     "keyPairName": "",
     "masterUsers": [

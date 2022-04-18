@@ -12,7 +12,7 @@ func NewEksFluentBit(stack awscdk.Stack, cluster awseks.Cluster) {
 	fbSa := awseks.NewServiceAccount(stack, jsii.String("FluentBitSA"), &awseks.ServiceAccountProps{
 		Name:      jsii.String("fluent-bit"),
 		Cluster:   cluster,
-		Namespace: jsii.String("amazon-cloudwatch"),
+		Namespace: jsii.String("kube-system"),
 	})
 	fbSa.Role().AddManagedPolicy(awsiam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("CloudWatchAgentServerPolicy")))
 
@@ -40,7 +40,7 @@ func NewEksFluentBit(stack awscdk.Stack, cluster awseks.Cluster) {
 		Release:         jsii.String("aws-for-fluent-bit"),
 		Cluster:         cluster,
 		Chart:           jsii.String("aws-for-fluent-bit"),
-		Namespace:       jsii.String("amazon-cloudwatch"),
+		Namespace:       jsii.String("kube-system"),
 		CreateNamespace: jsii.Bool(true),
 		Wait:            jsii.Bool(true),
 		Version:         jsii.String("0.1.15"),

@@ -12,7 +12,7 @@ func NewEksCloudWatchMetrics(stack awscdk.Stack, cluster awseks.Cluster) {
 	cwAgentSa := awseks.NewServiceAccount(stack, jsii.String("AWSCloudWatchAgentSA"), &awseks.ServiceAccountProps{
 		Name:      jsii.String("cloudwatch-agent"),
 		Cluster:   cluster,
-		Namespace: jsii.String("amazon-cloudwatch"),
+		Namespace: jsii.String("kube-system"),
 	})
 	cwAgentSa.Role().AddManagedPolicy(awsiam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("CloudWatchAgentServerPolicy")))
 
@@ -22,10 +22,10 @@ func NewEksCloudWatchMetrics(stack awscdk.Stack, cluster awseks.Cluster) {
 		Release:         jsii.String("aws-cloudwatch-metrics"),
 		Cluster:         cluster,
 		Chart:           jsii.String("aws-cloudwatch-metrics"),
-		Namespace:       jsii.String("amazon-cloudwatch"),
+		Namespace:       jsii.String("kube-system"),
 		CreateNamespace: jsii.Bool(true),
 		Wait:            jsii.Bool(true),
-		Version:         jsii.String("0.0.6"),
+		Version:         jsii.String("0.0.7"),
 		Values: &map[string]interface{}{
 			"clusterName": cluster.ClusterName(),
 			"serviceAccount": map[string]interface{}{

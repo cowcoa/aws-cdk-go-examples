@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
 
@@ -17,6 +18,8 @@ func StackName(scope constructs.Construct) string {
 		stackName = v
 	}
 
+	stackName = fmt.Sprintf("%s-%s", stackName, string(TargetArch(scope)))
+
 	return stackName
 }
 
@@ -28,6 +31,8 @@ func ClusterName(scope constructs.Construct) string {
 	if v, ok := ctxValue.(string); ok {
 		clusterName = v
 	}
+
+	clusterName = fmt.Sprintf("%s-%s", clusterName, string(TargetArch(scope)))
 
 	return clusterName
 }
@@ -81,6 +86,26 @@ func DeploymentStage(scope constructs.Construct) DeploymentStageType {
 	}
 
 	return deploymentStage
+}
+
+// DO NOT modify this function, change EKS cluster nodegroup's archtecture type by 'cdk.json/context/targetArch'.
+// Allowed values are: x86_64, arm64.
+type TargetArchType string
+
+const (
+	TargetArch_x86 TargetArchType = "x86_64"
+	TargetArch_arm TargetArchType = "arm64"
+)
+
+func TargetArch(scope constructs.Construct) TargetArchType {
+	targetArch := TargetArch_x86
+
+	ctxValue := scope.Node().TryGetContext(jsii.String("targetArch"))
+	if v, ok := ctxValue.(string); ok {
+		targetArch = TargetArchType(v)
+	}
+
+	return targetArch
 }
 
 // VPC config

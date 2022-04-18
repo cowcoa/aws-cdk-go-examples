@@ -26,7 +26,7 @@ fi
 # Destroy pre-process.
 if [ "$CDK_CMD" == "destroy" ]; then
     # Remove PVRE hook auto-added policy before executing destroy.
-    node_role_name="$(jq -r .context.stackName ./cdk.json)-ClusterNodeRole"
+    node_role_name="$(jq -r .context.stackName ./cdk.json)-$(jq -r .context.targetArch ./cdk.json)-ClusterNodeRole"
     aws iam detach-role-policy --role-name $node_role_name --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
 fi
 
@@ -41,8 +41,7 @@ init_state_file=$SHELL_PATH/cdk.out/init.state
 if [ $cdk_exec_result -eq 0 ] && [ "$CDK_CMD" == "deploy" ] && [ ! -f "$init_state_file" ]; then
     # Update kubeconfig
     echo "Update kubeconfig..."
-    stack_name="$(jq -r .context.stackName ./cdk.json)"
-    eks_cluster_name="$(jq -r .context.clusterName ./cdk.json)"
+    eks_cluster_name="$(jq -r .context.clusterName ./cdk.json)-$(jq -r .context.targetArch ./cdk.json)"
     aws eks update-kubeconfig --region ${CDK_REGION} --name ${eks_cluster_name}
 
     # Add the following annotation to your service accounts to use the AWS Security Token Service AWS Regional endpoint, rather than the global endpoint.

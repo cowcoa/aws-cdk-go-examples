@@ -37,15 +37,20 @@ func NewEksCdkStack(scope constructs.Construct, id string, props *EksCdkStackPro
 
 	// Create EKS cluster
 	cluster := createEksCluster(stack, vpc)
-	addons.NewEksCoreDns(stack, cluster)
-	addons.NewEksKubeProxy(stack, cluster)
+	// NOTE: You MUST install these three addons at cluster creation time.
+	// If you don't, your nodes will failed to register with your cluster.
 	addons.NewEksVpcCni(stack, cluster)
+	addons.NewEksKubeProxy(stack, cluster)
+	addons.NewEksCoreDns(stack, cluster)
+
 	addons.NewEksEbsCsiDriver(stack, cluster)
+	addons.NewEksMetricsServer(stack, cluster)
 	addons.NewEksClusterAutoscaler(stack, cluster)
 	addons.NewEksLoadBalancerController(stack, cluster)
 	addons.NewEksNodeTerminationHandler(stack, cluster)
-	addons.NewEksExternalDNS(stack, cluster)
-	addons.NewEksMetricsServer(stack, cluster)
+	if config.TargetArch(stack) == config.TargetArch_x86 {
+		addons.NewEksExternalDNS(stack, cluster)
+	}
 	addons.NewEksAwsXray(stack, cluster)
 	addons.NewEksCloudWatchMetrics(stack, cluster)
 	addons.NewEksFluentBit(stack, cluster)
@@ -139,6 +144,13 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		keyPair = jsii.String(config.KeyPairName(stack))
 	}
 
+	amiType := awseks.NodegroupAmiType_AL2_X86_64
+	instanceClass := awsec2.InstanceClass_COMPUTE5
+	if config.TargetArch(stack) == config.TargetArch_arm {
+		amiType = awseks.NodegroupAmiType_AL2_ARM_64
+		instanceClass = awsec2.InstanceClass_STANDARD6_GRAVITON
+	}
+
 	// Create On-Demand Instance Nodegroup Launch Template.
 	onDemandNgLt := awsec2.NewLaunchTemplate(stack, jsii.String("OnDemandNodegroupLT"), &awsec2.LaunchTemplateProps{
 		BlockDevices: &[]*awsec2.BlockDevice{
@@ -146,7 +158,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 				DeviceName: jsii.String("/dev/xvda"),
 				Volume: awsec2.BlockDeviceVolume_Ebs(jsii.Number(100), &awsec2.EbsDeviceOptions{
 					DeleteOnTermination: jsii.Bool(true),
-					VolumeType:          awsec2.EbsDeviceVolumeType_GP2,
+					VolumeType:          awsec2.EbsDeviceVolumeType_GP3,
 					Encrypted:           jsii.Bool(false),
 				}),
 			},
@@ -157,10 +169,10 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 	})
 	// Add On-Demand Instance Nodegroup.
 	cluster.AddNodegroupCapacity(jsii.String("OnDemandNodegroup"), &awseks.NodegroupOptions{
-		AmiType:      awseks.NodegroupAmiType_AL2_X86_64,
+		AmiType:      amiType,
 		CapacityType: awseks.CapacityType_ON_DEMAND,
 		// DesiredSize:   jsii.Number(2),
-		InstanceTypes: &[]awsec2.InstanceType{awsec2.InstanceType_Of(awsec2.InstanceClass_COMPUTE5, awsec2.InstanceSize_LARGE)},
+		InstanceTypes: &[]awsec2.InstanceType{awsec2.InstanceType_Of(instanceClass, awsec2.InstanceSize_LARGE)},
 		Labels: &map[string]*string{
 			"deployment-stage": jsii.String(string(config.DeploymentStage(stack))),
 		},
@@ -182,7 +194,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 					DeviceName: jsii.String("/dev/xvda"),
 					Ebs: awsec2.CfnLaunchTemplate_EbsProperty{
 						DeleteOnTermination: jsii.Bool(true),
-						VolumeType:          jsii.String("gp2"),
+						VolumeType:          jsii.String("gp3"),
 						Encrypted:           jsii.Bool(false),
 					},
 				},
@@ -207,10 +219,10 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 	})
 	// Add Spot Instance Nodegroup.
 	cluster.AddNodegroupCapacity(jsii.String("SpotNodegroup"), &awseks.NodegroupOptions{
-		AmiType:      awseks.NodegroupAmiType_AL2_X86_64,
+		AmiType:      amiType,
 		CapacityType: awseks.CapacityType_SPOT,
 		// DesiredSize:   jsii.Number(2),
-		InstanceTypes: &[]awsec2.InstanceType{awsec2.InstanceType_Of(awsec2.InstanceClass_COMPUTE5, awsec2.InstanceSize_LARGE)},
+		InstanceTypes: &[]awsec2.InstanceType{awsec2.InstanceType_Of(instanceClass, awsec2.InstanceSize_LARGE)},
 		Labels: &map[string]*string{
 			"deployment-stage": jsii.String(string(config.DeploymentStage(stack))),
 		},
