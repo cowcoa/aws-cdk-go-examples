@@ -13,7 +13,6 @@ import (
 
 	"arm64-cluster/config"
 	"arm64-cluster/constructs/addons"
-	"arm64-cluster/constructs/ecr"
 	"arm64-cluster/constructs/vpc"
 )
 
@@ -33,9 +32,6 @@ func NewEksCdkStack(scope constructs.Construct, id string, props *EksCdkStackPro
 	})
 
 	// The code that defines your stack goes here
-	// Create ECR repo
-	ecr.NewEcrRepository(stack)
-
 	// Create VPC
 	vpc := vpc.NewEksVpc(stack)
 
