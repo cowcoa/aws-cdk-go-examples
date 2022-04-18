@@ -28,6 +28,10 @@ func NewEksCdkStack(scope constructs.Construct, id string, props *EksCdkStackPro
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
+	awscdk.NewCfnOutput(stack, jsii.String("region"), &awscdk.CfnOutputProps{
+		Value: stack.Region(),
+	})
+
 	// The code that defines your stack goes here
 	// Create ECR repo
 	ecr.NewEcrRepository(stack)
@@ -49,6 +53,26 @@ func NewEksCdkStack(scope constructs.Construct, id string, props *EksCdkStackPro
 	addons.NewEksAwsXray(stack, cluster)
 	addons.NewEksCloudWatchMetrics(stack, cluster)
 	addons.NewEksFluentBit(stack, cluster)
+
+	// Output cluster info.
+	awscdk.NewCfnOutput(stack, jsii.String("clusterName"), &awscdk.CfnOutputProps{
+		Value: cluster.ClusterName(),
+	})
+	awscdk.NewCfnOutput(stack, jsii.String("apiServerEndpoint"), &awscdk.CfnOutputProps{
+		Value: cluster.ClusterEndpoint(),
+	})
+	awscdk.NewCfnOutput(stack, jsii.String("kubectlRoleArn"), &awscdk.CfnOutputProps{
+		Value: cluster.KubectlRole().RoleArn(),
+	})
+	awscdk.NewCfnOutput(stack, jsii.String("oidcIdpArn"), &awscdk.CfnOutputProps{
+		Value: cluster.OpenIdConnectProvider().OpenIdConnectProviderArn(),
+	})
+	awscdk.NewCfnOutput(stack, jsii.String("clusterSecurityGroupId"), &awscdk.CfnOutputProps{
+		Value: cluster.ClusterSecurityGroup().SecurityGroupId(),
+	})
+	awscdk.NewCfnOutput(stack, jsii.String("certificateAuthorityData"), &awscdk.CfnOutputProps{
+		Value: cluster.ClusterCertificateAuthorityData(),
+	})
 
 	return stack
 }
@@ -102,9 +126,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		OutputConfigCommand: jsii.Bool(false),
 		SecurityGroup:       nodeSG, // Set additional cluster security group.
 	})
-	awscdk.NewCfnOutput(stack, jsii.String("EKSClusterName"), &awscdk.CfnOutputProps{
-		Value: cluster.ClusterName(),
-	})
+
 	// Create cluster node role.
 	clusterNodeRole := awsiam.NewRole(stack, jsii.String("ClusterNodeRole"), &awsiam.RoleProps{
 		AssumedBy: awsiam.NewServicePrincipal(jsii.String("ec2.amazonaws.com"), &awsiam.ServicePrincipalOpts{}),

@@ -32,7 +32,7 @@ fi
 
 # CDK command.
 # Valid deploymentStage are: [DEV, PROD]
-set -- "$@" "-c" "deploymentStage=DEV"
+set -- "$@" "-c" "deploymentStage=DEV" "--outputs-file" "${SHELL_PATH}/cdk.out/cluster-info.json"
 $SHELL_PATH/cdk-cli-wrapper.sh ${CDK_ACC} ${CDK_REGION} "$@"
 cdk_exec_result=$?
 
@@ -45,11 +45,14 @@ if [ $cdk_exec_result -eq 0 ] && [ "$CDK_CMD" == "deploy" ] && [ ! -f "$init_sta
     eks_cluster_name="$(jq -r .context.clusterName ./cdk.json)"
     aws eks update-kubeconfig --region ${CDK_REGION} --name ${eks_cluster_name}
 
-    # Add the following annotation to your service accounts to use the AWS Security Token Service AWS Regional endpoint, 
-    # rather than the global endpoint.
+    # Add the following annotation to your service accounts to use the AWS Security Token Service AWS Regional endpoint, rather than the global endpoint.
+    # If your cluster is 1.22 or later, the AWS Regional endpoint is used by default, so you don't need to annotate your Kubernetes service accounts to use it.
     echo "Update service account annotate..."
     kubectl annotate serviceaccount -n kube-system aws-node eks.amazonaws.com/sts-regional-endpoints=true
     kubectl annotate serviceaccount -n kube-system aws-load-balancer-controller eks.amazonaws.com/sts-regional-endpoints=true
+
+    # Patch the deployment to add the cluster-autoscaler.kubernetes.io/safe-to-evict annotation.
+    echo "Patch cluster autoscaler deployment..."
     kubectl patch deployment cluster-autoscaler-aws-cluster-autoscaler -n kube-system -p '{"spec":{"template":{"metadata":{"annotations":{"cluster-autoscaler.kubernetes.io/safe-to-evict": "false"}}}}}'
 
     # Change init state.

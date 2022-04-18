@@ -54,5 +54,9 @@ func NewEksVpc(stack awscdk.Stack) awsec2.Vpc {
 		awscdk.Tags_Of(subnet).Add(jsii.String("kubernetes.io/role/internal-elb"), jsii.String("1"), &awscdk.TagProps{})
 	}
 
+	awscdk.NewCfnOutput(stack, jsii.String("vpcId"), &awscdk.CfnOutputProps{
+		Value: vpc.VpcId(),
+	})
+
 	return vpc
 }
