@@ -1,3 +1,20 @@
+# EKS Simple Cluster
+
+Demonstrate how to create an EKS cluster and manage related addons.
+
+This example will automatically install the following K8s addons:
+- vpc-cni
+- kube-proxy
+- coredns
+- ebs-csi-driver
+- metrics-server
+- cluster-autoscaler
+- aws-load-balancer-controller
+- node-termination-handler
+- aws-xray
+- cloudwatch-agent
+- fluent-bit-for-aws
+
 ## Configuration
 
 You can edit the cdk.json file to modify the deployment configuration.
