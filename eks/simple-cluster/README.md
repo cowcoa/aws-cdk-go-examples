@@ -10,6 +10,7 @@ This example will automatically install the following K8s addons:
 - metrics-server
 - cluster-autoscaler
 - aws-load-balancer-controller
+- external-dns
 - node-termination-handler
 - aws-xray
 - cloudwatch-agent
