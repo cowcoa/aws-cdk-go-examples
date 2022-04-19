@@ -1,7 +1,7 @@
 package addons
 
 import (
-	"arm64-cluster/config"
+	"simple-cluster/config"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awseks"

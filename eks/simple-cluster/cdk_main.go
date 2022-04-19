@@ -11,9 +11,9 @@ import (
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 
-	"arm64-cluster/config"
-	"arm64-cluster/constructs/addons"
-	"arm64-cluster/constructs/vpc"
+	"simple-cluster/config"
+	"simple-cluster/constructs/addons"
+	"simple-cluster/constructs/vpc"
 )
 
 type EksCdkStackProps struct {

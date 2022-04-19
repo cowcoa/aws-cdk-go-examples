@@ -1,4 +1,4 @@
-module arm64-cluster
+module simple-cluster
 
 go 1.17
 
