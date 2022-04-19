@@ -114,6 +114,10 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 		subnetType = awsec2.SubnetType_PRIVATE_WITH_NAT
 	}
 	// Create EKS cluster.
+	showCfgCmd := false
+	if len(config.MasterUsers(stack)) == 0 {
+		showCfgCmd = true
+	}
 	cluster := awseks.NewCluster(stack, jsii.String("EksCluster"), &awseks.ClusterProps{
 		ClusterName: jsii.String(config.ClusterName(stack)),
 		Version:     awseks.KubernetesVersion_V1_21(),
@@ -124,7 +128,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 			},
 		},
 		DefaultCapacity:     jsii.Number(0), // Disable creation of default node group.
-		OutputConfigCommand: jsii.Bool(false),
+		OutputConfigCommand: jsii.Bool(showCfgCmd),
 		SecurityGroup:       nodeSG, // Set additional cluster security group.
 	})
 

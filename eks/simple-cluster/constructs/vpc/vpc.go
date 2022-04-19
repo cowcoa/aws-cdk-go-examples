@@ -1,7 +1,7 @@
 package vpc
 
 import (
-	"arm64-cluster/config"
+	"simple-cluster/config"
 	"strconv"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
