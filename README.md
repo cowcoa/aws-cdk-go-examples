@@ -35,12 +35,14 @@ Run the following command to deploy AWS infra and code by CDK Toolkit:<br />
   ```
 If all goes well, you will see output like below:<br />
   ```sh
-  Outputs:
-  CDKGoExample-ABC = XYZ
+  ✅  CDKGoExample-ABC
+   
+  ✨  Deployment time: 144.82s
+
   Stack ARN:
-  arn:aws:cloudformation:ap-northeast-2:123456789012:stack/CDKGoExample-ABC/225b9050-a414-11ec-b5c2-0ab842e4df54
+  arn:aws:cloudformation:ap-northeast-1:123456789012:stack/CDKGoExample-ABC/225b9050-a414-11ec-b5c2-0ab842e4df54
   
-  ✨  Total time: 133.05s
+  ✨  Total time: 150.13s
   ```
 You can also clean up the deployment by running command:<br />
   ```sh
@@ -50,6 +52,7 @@ cdk-cli-wrapper-dev.sh is a wrapper script for CDK command to which you can pass
 
 ## Examples
 
-This page contains list of examples.
+List of examples.
 
 - [APIGateway+Lambda+DynamoDB](./serverless/apigateway_lambda_ddb) - AWS serverless architecture to demonstrate how to build a simple chatroom service.
+- [Simple EKS cluster](./eks/simple-cluster) - Demonstrate how to create an EKS cluster and manage related addons.
