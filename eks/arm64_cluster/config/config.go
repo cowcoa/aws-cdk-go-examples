@@ -89,11 +89,11 @@ func DeploymentStage(scope constructs.Construct) DeploymentStageType {
 }
 
 // DO NOT modify this function, change EKS cluster nodegroup's archtecture type by 'cdk.json/context/targetArch'.
-// Allowed values are: x86_64, arm64.
+// Allowed values are: amd64, arm64.
 type TargetArchType string
 
 const (
-	TargetArch_x86 TargetArchType = "x86_64"
+	TargetArch_x86 TargetArchType = "amd64"
 	TargetArch_arm TargetArchType = "arm64"
 )
 
@@ -154,7 +154,7 @@ func ExternalDnsRole(scope constructs.Construct) string {
 				{
 					"Effect": "Allow",
 					"Principal": {
-						"AWS": "Role ARN in cluster account"
+						"AWS": "arn:aws:iam::123456789012:root" // Or IAM role arn that associated with external-dns service account.
 					},
 					"Action": "sts:AssumeRole",
 					"Condition": {}

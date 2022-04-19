@@ -57,7 +57,7 @@ if [ $cdk_exec_result -eq 0 ] && [ "$CDK_CMD" == "deploy" ] && [ ! -f "$init_sta
     # Change init state.
     if [ $? -eq 0 ]; then
         echo "Update init state..."
-        echo $(date '+%Y.%m.%d.%H%M%S' -d '+8 hours') > $init_state_file
+        echo "$(date '+%Y.%m.%d.%H%M%S' -d '+8 hours')|UTC+8" > $init_state_file
         echo "The first deployment is complete."
         echo ""
     fi
