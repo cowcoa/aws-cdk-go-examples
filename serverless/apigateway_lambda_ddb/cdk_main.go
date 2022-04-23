@@ -107,6 +107,11 @@ func NewApiGtwLambdaDdbStack(scope constructs.Construct, id string, props *ApiGt
 			RateLimit:  jsii.Number(2),
 			BurstLimit: jsii.Number(1),
 		},
+		Quota: &awsapigateway.QuotaSettings{
+			Limit:  jsii.Number(10),
+			Offset: jsii.Number(0),
+			Period: awsapigateway.Period_DAY,
+		},
 		ApiStages: &[]*awsapigateway.UsagePlanPerApiStage{
 			{
 				Api:   restApi,
