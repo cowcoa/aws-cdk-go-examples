@@ -77,15 +77,56 @@ func NewApiGtwLambdaDdbStack(scope constructs.Construct, id string, props *ApiGt
 		EndpointExportName: jsii.String("RestApiUrl"),
 		Deploy:             jsii.Bool(true),
 		DeployOptions: &awsapigateway.StageOptions{
-			StageName: jsii.String("dev"),
+			StageName:           jsii.String("dev"),
+			CacheClusterEnabled: jsii.Bool(true),
+			CacheClusterSize:    jsii.String("0.5"),
+			CacheTtl:            awscdk.Duration_Minutes(jsii.Number(1)),
+			// https://www.petefreitag.com/item/853.cfm
+			// This can help you better understand what burst and rate limite are.
+			ThrottlingBurstLimit: jsii.Number(100),
+			ThrottlingRateLimit:  jsii.Number(1000),
 		},
 	})
 
 	// Add path resources to rest api.
+	// You MUST associate ApiKey with the methods for the UsagePlane to work.
 	putRecordsRes := restApi.Root().AddResource(jsii.String("put-chat-records"), nil)
-	putRecordsRes.AddMethod(jsii.String("POST"), awsapigateway.NewLambdaIntegration(putFunction, nil), nil)
+	putRecordsRes.AddMethod(jsii.String("POST"), awsapigateway.NewLambdaIntegration(putFunction, nil), &awsapigateway.MethodOptions{
+		ApiKeyRequired: jsii.Bool(true),
+	})
 	getRecordsRes := restApi.Root().AddResource(jsii.String("get-chat-records"), nil)
-	getRecordsRes.AddMethod(jsii.String("GET"), awsapigateway.NewLambdaIntegration(getFunction, nil), nil)
+	getMethod := getRecordsRes.AddMethod(jsii.String("GET"), awsapigateway.NewLambdaIntegration(getFunction, nil), &awsapigateway.MethodOptions{
+		ApiKeyRequired: jsii.Bool(true),
+	})
+
+	// UsagePlane's throttle can override Stage's DefaultMethodThrottle,
+	// while UsagePlanePerApiStage's throttle can override UsagePlane's throttle.
+	usagePlane := restApi.AddUsagePlan(jsii.String("UsagePlane"), &awsapigateway.UsagePlanProps{
+		Name: jsii.String(*stack.StackName() + "-UsagePlane"),
+		Throttle: &awsapigateway.ThrottleSettings{
+			RateLimit:  jsii.Number(2),
+			BurstLimit: jsii.Number(1),
+		},
+		ApiStages: &[]*awsapigateway.UsagePlanPerApiStage{
+			{
+				Api:   restApi,
+				Stage: restApi.DeploymentStage(),
+				Throttle: &[]*awsapigateway.ThrottlingPerMethod{
+					{
+						Method: getMethod,
+						Throttle: &awsapigateway.ThrottleSettings{
+							RateLimit:  jsii.Number(0),
+							BurstLimit: jsii.Number(0),
+						},
+					},
+				},
+			},
+		},
+	})
+
+	// Create ApiKey and associate it with UsagePlane.
+	apiKey := restApi.AddApiKey(jsii.String("ApiKey"), &awsapigateway.ApiKeyOptions{})
+	usagePlane.AddApiKey(apiKey, &awsapigateway.AddApiKeyOptions{})
 
 	// Create DynamoDB Base table.
 	// Data Modeling
