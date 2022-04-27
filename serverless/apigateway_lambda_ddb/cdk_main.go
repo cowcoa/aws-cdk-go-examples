@@ -104,11 +104,11 @@ func NewApiGtwLambdaDdbStack(scope constructs.Construct, id string, props *ApiGt
 	usagePlane := restApi.AddUsagePlan(jsii.String("UsagePlane"), &awsapigateway.UsagePlanProps{
 		Name: jsii.String(*stack.StackName() + "-UsagePlane"),
 		Throttle: &awsapigateway.ThrottleSettings{
-			RateLimit:  jsii.Number(2),
-			BurstLimit: jsii.Number(1),
+			BurstLimit: jsii.Number(10),
+			RateLimit:  jsii.Number(100),
 		},
 		Quota: &awsapigateway.QuotaSettings{
-			Limit:  jsii.Number(10),
+			Limit:  jsii.Number(100),
 			Offset: jsii.Number(0),
 			Period: awsapigateway.Period_DAY,
 		},
@@ -120,8 +120,8 @@ func NewApiGtwLambdaDdbStack(scope constructs.Construct, id string, props *ApiGt
 					{
 						Method: getMethod,
 						Throttle: &awsapigateway.ThrottleSettings{
-							RateLimit:  jsii.Number(0),
-							BurstLimit: jsii.Number(0),
+							BurstLimit: jsii.Number(1),
+							RateLimit:  jsii.Number(10),
 						},
 					},
 				},
