@@ -55,6 +55,7 @@ You can POST user comment by following API:
   ```sh
   POST https://b12gqp2av5.execute-api.ap-northeast-2.amazonaws.com/dev/put-chat-records
   Content-Type: application/json
+  x-api-key: dI65dhFd3742OmUhbdxYo4CT2eOwfoUT1FCtm8ml
   Body:
   {
     "name"    : string,
@@ -66,6 +67,7 @@ You can POST user comment by following API:
 Or you can QUERY user comments by following API:
   ```sh
   GET https://b12gqp2av5.execute-api.ap-northeast-2.amazonaws.com/dev/get-chat-records?chatroom=abc123
+  x-api-key: dI65dhFd3742OmUhbdxYo4CT2eOwfoUT1FCtm8ml
   Status Code: 200 OK
   [
     {
