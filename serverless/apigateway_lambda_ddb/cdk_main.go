@@ -68,6 +68,7 @@ func NewApiGtwLambdaDdbStack(scope constructs.Construct, id string, props *ApiGt
 			"DYNAMODB_TABLE": jsii.String(*stack.StackName() + "-" + config.DynamoDBTable),
 			"DYNAMODB_GSI":   jsii.String(config.DynamoDBGSI),
 		},
+		// ReservedConcurrentExecutions: jsii.Number(1),
 	})
 
 	// Create API Gateway rest api.
