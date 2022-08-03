@@ -240,7 +240,7 @@ func NewAurora(stack awscdk.Stack, vpc awsec2.Vpc) awsrds.DatabaseCluster {
 	})
 
 	dbEngine := awsrds.DatabaseClusterEngine_AuroraMysql(&awsrds.AuroraMysqlClusterEngineProps{
-		Version: awsrds.AuroraMysqlEngineVersion_VER_3_01_0(),
+		Version: awsrds.AuroraMysqlEngineVersion_VER_2_09_2(),
 	})
 
 	pg := awsrds.NewParameterGroup(stack, jsii.String("ParameterGroup"), &awsrds.ParameterGroupProps{
@@ -337,15 +337,11 @@ func NewNEARStack(scope constructs.Construct, id string, props *NEARStackProps) 
 	vpc := NewVpc(stack)
 	asg := NewAsg(stack, vpc)
 	nlb := NewNlb(stack, vpc, asg)
-	aurora := NewAurora(stack, vpc)
+	NewAurora(stack, vpc)
 	NewECRedis(stack, vpc)
 
 	awscdk.NewCfnOutput(stack, jsii.String("albDNS"), &awscdk.CfnOutputProps{
 		Value: nlb.LoadBalancerDnsName(),
-	})
-
-	awscdk.NewCfnOutput(stack, jsii.String("Aurora Cluster"), &awscdk.CfnOutputProps{
-		Value: aurora.ClusterIdentifier(),
 	})
 
 	return stack
