@@ -12,7 +12,9 @@ fi
 
 # CDK command pre-process.
 if [ "$CDK_CMD" == "deploy" ]; then
-    echo ""
+    # Remove PVRE hook auto-added policy before executing destroy.
+    node_role_name="$(jq -r .context.stackName ./cdk.json)-$(jq -r .context.targetArch ./cdk.json)-ClusterNodeRole"
+    aws iam detach-role-policy --role-name $node_role_name --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
 fi
 
 if [ "$CDK_CMD" == "destroy" ]; then

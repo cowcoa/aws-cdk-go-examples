@@ -75,12 +75,11 @@ func TargetArch(scope constructs.Construct) TargetArchType {
 }
 
 // VPC config
-const vpcMask = 16
-const vpcIpv4 = "172.29.0.0"
+const (
+	vpcMask    = 16
+	vpcIpv4    = "172.29.0.0"
+	MaxAzs     = 3
+	SubnetMask = vpcMask + MaxAzs
+)
 
 var VpcCidr = vpcIpv4 + "/" + strconv.Itoa(vpcMask)
-
-const MaxAzs = 2
-
-// 2 Subnets per AZ, Private + Public
-const SubnetMask = vpcMask + 1
