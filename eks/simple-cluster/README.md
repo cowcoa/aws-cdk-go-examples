@@ -36,7 +36,7 @@ After the deployment is complete, the EKS cluster information will be written to
 | Name | Example Value |
 | ------ | ------ |
 | clusterSecurityGroupId | sg-0cb7ee5b03a23bb74 |
-| apiServerEndpoint | https://AB123D8E12345CD123AA92855957B4F8.gr7.ap-northeast-1.eks.amazonaws.com |
+| apiServerEndpoint | https:<span>//AB123D8E12345CD123AA92855957B4F8.gr7.ap-northeast-1.eks.amazonaws.com |
 | vpcId | vpc-0445143cc39ee48f6 |
 | clusterName | CDKGoExample-EKSCluster |
 | certificateAuthorityData | LS0tLS1CRUdJTi...BDRVJUSU0tCg== |
