@@ -44,4 +44,4 @@ After the deployment is complete, the EKS cluster information will be written to
 | region | ap-northeast-1 |
 | oidcIdpArn | arn:aws:iam::123456789012:oidc-provider/oidc.eks.ap-northeast-1.amazonaws.com/id/AB123D8E12345CD123AA92855957B4F8 |
 
-You can call awseks.Cluster_FromClusterAttributes to import this cluster in other CDK8s projects.
+You can call `awseks.Cluster_FromClusterAttributes` to import this cluster in other CDK8s projects.
