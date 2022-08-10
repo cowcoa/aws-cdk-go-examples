@@ -139,7 +139,7 @@ func createEksCluster(stack awscdk.Stack, vpc awsec2.Vpc) awseks.Cluster {
 			awsiam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonEKSWorkerNodePolicy")),
 			awsiam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("AmazonEC2ContainerRegistryReadOnly")),
 		},
-		RoleName: jsii.String(*stack.StackName() + "-ClusterNodeRole"),
+		RoleName: jsii.String(*stack.StackName() + "-" + *stack.Region() + "-ClusterNodeRole"),
 	})
 
 	// Get key-pair pointer.

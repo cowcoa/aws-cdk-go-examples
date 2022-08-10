@@ -8,7 +8,7 @@ CDK_ACC="$(aws sts get-caller-identity --output text --query 'Account')"
 CDK_REGION="$(jq -r .context.deploymentRegion ./cdk.json)"
 
 # Check execution env.
-if [ -z $CODEBUILD_BUILD_ID ]
+if [ -z "$CODEBUILD_BUILD_ID" ]
 then
     if [ -z "$CDK_REGION" ]; then
         CDK_REGION="$(aws configure get region)"
@@ -26,8 +26,12 @@ fi
 # Destroy pre-process.
 if [ "$CDK_CMD" == "destroy" ]; then
     # Remove PVRE hook auto-added policy before executing destroy.
-    node_role_name="$(jq -r .context.stackName ./cdk.json)-$(jq -r .context.targetArch ./cdk.json)-ClusterNodeRole"
-    aws iam detach-role-policy --role-name $node_role_name --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+    node_role_name="$(jq -r .context.stackName ./cdk.json)-$(jq -r .context.targetArch ./cdk.json)-${CDK_REGION}-ClusterNodeRole"
+    policy_arn="$(aws iam list-attached-role-policies --role-name ${node_role_name} --query 'AttachedPolicies[?PolicyName==`AmazonSSMManagedInstanceCore`].PolicyArn' --output text)"
+
+    if [ ! -z "$policy_arn" ]; then
+        aws iam detach-role-policy --role-name $node_role_name --policy-arn $policy_arn
+    fi
 fi
 
 # CDK command.
@@ -37,11 +41,11 @@ $SHELL_PATH/cdk-cli-wrapper.sh ${CDK_ACC} ${CDK_REGION} "$@"
 cdk_exec_result=$?
 
 # CDK command post-process.
-init_state_file=$SHELL_PATH/cdk.out/init.state
+eks_cluster_name="$(jq -r .context.clusterName ./cdk.json)-$(jq -r .context.targetArch ./cdk.json)"
+init_state_file=$SHELL_PATH/cdk.out/init-state.${CDK_REGION}-${eks_cluster_name}
 if [ $cdk_exec_result -eq 0 ] && [ "$CDK_CMD" == "deploy" ] && [ ! -f "$init_state_file" ]; then
     # Update kubeconfig
     echo "Update kubeconfig..."
-    eks_cluster_name="$(jq -r .context.clusterName ./cdk.json)-$(jq -r .context.targetArch ./cdk.json)"
     aws eks update-kubeconfig --region ${CDK_REGION} --name ${eks_cluster_name}
 
     # Add the following annotation to your service accounts to use the AWS Security Token Service AWS Regional endpoint, rather than the global endpoint.
@@ -65,5 +69,5 @@ fi
 
 # Destroy post-process.
 if [ $cdk_exec_result -eq 0 ] && [ "$CDK_CMD" == "destroy" ]; then
-    rm -rf $SHELL_PATH/cdk.out/
+    rm -rf $init_state_file
 fi

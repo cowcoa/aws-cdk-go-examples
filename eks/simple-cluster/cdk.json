@@ -29,7 +29,9 @@
     "clusterName": "CDKGoExample-EKSCluster",
     "keyPairName": "",
     "masterUsers": [
+      "Cow",
+      "Admin"
     ],
-    "externalDnsRole": "arn:aws:iam::123456789012:role/AWSIsengardAccount-EKSExternalDNSRole"
+    "externalDnsRole": "arn:aws:iam::123456789012:role/AWSAccount-EKSExternalDNSRole"
   }
 }

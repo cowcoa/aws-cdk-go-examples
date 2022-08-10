@@ -12,6 +12,6 @@ func NewEksKubeProxy(stack awscdk.Stack, cluster awseks.Cluster) {
 		AddonName:        jsii.String("kube-proxy"),
 		ResolveConflicts: jsii.String("OVERWRITE"),
 		ClusterName:      cluster.ClusterName(),
-		AddonVersion:     jsii.String("v1.21.2-eksbuild.2"),
+		AddonVersion:     jsii.String("v1.21.14-eksbuild.2"),
 	})
 }

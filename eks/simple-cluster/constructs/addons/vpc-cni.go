@@ -10,7 +10,7 @@ import (
 // Install VPC CNI add-on
 func NewEksVpcCni(stack awscdk.Stack, cluster awseks.Cluster) {
 	cniRole := awsiam.NewRole(stack, jsii.String("VPCCNIRole"), &awsiam.RoleProps{
-		RoleName: jsii.String(*stack.StackName() + "-AmazonEKSVPCCNIRole"),
+		RoleName: jsii.String(*stack.StackName() + "-" + *stack.Region() + "-AmazonEKSVPCCNIRole"),
 		AssumedBy: awsiam.NewWebIdentityPrincipal(cluster.OpenIdConnectProvider().OpenIdConnectProviderArn(), &map[string]interface{}{
 			"StringEquals": awscdk.NewCfnJson(stack, jsii.String("CfnJson-VPCCNIRole"), &awscdk.CfnJsonProps{
 				Value: map[string]string{
@@ -27,7 +27,7 @@ func NewEksVpcCni(stack awscdk.Stack, cluster awseks.Cluster) {
 		AddonName:             jsii.String("vpc-cni"),
 		ResolveConflicts:      jsii.String("OVERWRITE"),
 		ClusterName:           cluster.ClusterName(),
-		AddonVersion:          jsii.String("v1.10.2-eksbuild.1"),
+		AddonVersion:          jsii.String("v1.11.2-eksbuild.1"),
 		ServiceAccountRoleArn: cniRole.RoleArn(),
 	})
 }
