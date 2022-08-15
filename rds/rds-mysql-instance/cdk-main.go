@@ -86,7 +86,6 @@ func NewRdsMySqlClusterStack(scope constructs.Construct, id string, props *RdsMy
 	dbPrimInstance := awsrds.NewDatabaseInstance(stack, jsii.String("PrimaryDBInstance"), &awsrds.DatabaseInstanceProps{
 		InstanceIdentifier: jsii.String(*stack.StackName() + "-PrimaryDBInstance"),
 		Vpc:                vpc,
-		AvailabilityZone:   jsii.String(*stack.Region() + "a"),
 		SecurityGroups: &[]awsec2.ISecurityGroup{
 			sg,
 		},
@@ -123,29 +122,29 @@ func NewRdsMySqlClusterStack(scope constructs.Construct, id string, props *RdsMy
 		MonitoringInterval:          awscdk.Duration_Seconds(jsii.Number(60)),
 		DeletionProtection:          jsii.Bool(false),
 		RemovalPolicy:               awscdk.RemovalPolicy_DESTROY,
-		// CharacterSetName:           jsii.String("utf8mb4"), // isn't supported when creating an instance using version 5.7 of mysql
+		// AvailabilityZone:                jsii.String(*stack.Region() + "a"), // Requesting a specific availability zone is not valid for Multi-AZ instances
+		// CharacterSetName:                jsii.String("utf8mb4"), // isn't supported when creating an instance using version 5.7 of mysql
 		// CloudwatchLogsRetentionRole:     nil, // CDK utility role, automatically created
 		// MonitoringRole:                  nil, // will be automatically created
 		// OptionGroup:                     nil, // https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.MySQL.Options.html
 		// PerformanceInsightEncryptionKey: nil, // no need to specify if you don't encrypt your PI
-		// ProcessorFeatures:           &awsrds.ProcessorFeatures{}, // no need to specify
-		// S3ExportBuckets:             &[]awss3.IBucket{}, // for exporting snapshot to s3 bucket
-		// S3ExportRole:                nil,
-		// VpcSubnets:               &awsec2.SubnetSelection{}, specified in subnet group
-		// Parameters:               &map[string]*string{}, // specified in parameter group
-		// LicenseModel:             "", // for Microsoft SQL Server
-		// Timezone:                 new(string), // only support by Microsoft SQL Server
-		// S3ImportBuckets:             &[]awss3.IBucket{}, // only support by Microsoft SQL Server
-		// S3ImportRole:                nil,
+		// ProcessorFeatures:               &awsrds.ProcessorFeatures{}, // no need to specify
+		// S3ExportBuckets:                 &[]awss3.IBucket{}, // for exporting snapshot to s3 bucket
+		// S3ExportRole:                    nil,
+		// VpcSubnets:                      &awsec2.SubnetSelection{}, specified in subnet group
+		// Parameters:                      &map[string]*string{}, // specified in parameter group
+		// LicenseModel:                    "", // for Microsoft SQL Server
+		// Timezone:                        new(string), // only support by Microsoft SQL Server
+		// S3ImportBuckets:                 &[]awss3.IBucket{}, // only support by Microsoft SQL Server
+		// S3ImportRole:                    nil,
 		// Domain:                          new(string), // using MS AD for Microsoft SQL Server DB instance
 		// DomainRole:                      nil,
-		// StorageEncryptionKey: nil, // no need to specify if you don't encrypt your database
+		// StorageEncryptionKey:            nil, // no need to specify if you don't encrypt your database
 	})
 
 	awsrds.NewDatabaseInstanceReadReplica(stack, jsii.String("ReplicaDBInstance"), &awsrds.DatabaseInstanceReadReplicaProps{
 		InstanceIdentifier: jsii.String(*stack.StackName() + "ReplicaDBInstance"),
 		Vpc:                vpc,
-		AvailabilityZone:   jsii.String(*stack.Region() + "b"),
 		SecurityGroups: &[]awsec2.ISecurityGroup{
 			sg,
 		},
