@@ -71,7 +71,7 @@ func NewRdsMySqlClusterStack(scope constructs.Construct, id string, props *RdsMy
 		},
 	})
 	// Database credential in SecretManager
-	// The Secret must be a JSON string with a “username“ and “password“ field: “`
+	// The Secret must be a JSON string with a “username“ and “password“ field
 	dbSecret := secretmgr.NewSecret(stack, jsii.String("DBSecret"), &secretmgr.SecretProps{
 		SecretName: jsii.String(*stack.StackName() + "-Secret"),
 		GenerateSecretString: &secretmgr.SecretStringGenerator{
