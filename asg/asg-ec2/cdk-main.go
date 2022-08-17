@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsautoscaling"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsec2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
@@ -69,11 +70,27 @@ func NewAsgEc2Stack(scope constructs.Construct, id string, props *AsgEc2StackPro
 		jsii.Bool(false),
 	)
 
+	// Create EC2 role.
+	ec2Role := awsiam.NewRole(stack, jsii.String("EC2Role"), &awsiam.RoleProps{
+		AssumedBy: awsiam.NewServicePrincipal(jsii.String("ec2.amazonaws.com"), &awsiam.ServicePrincipalOpts{}),
+		ManagedPolicies: &[]awsiam.IManagedPolicy{
+			awsiam.ManagedPolicy_FromAwsManagedPolicyName(jsii.String("CloudWatchLogsReadOnlyAccess")),
+		},
+		RoleName: jsii.String(*stack.StackName() + "-" + *stack.Region() + "-EC2Role"),
+	})
+
 	// Create Auto Scaling Group
 	asg := awsautoscaling.NewAutoScalingGroup(stack, jsii.String("ASG"), &awsautoscaling.AutoScalingGroupProps{
-		AllowAllOutbound:         jsii.Bool(false),
-		AssociatePublicIpAddress: jsii.Bool(false),
-		AutoScalingGroupName:     jsii.String(*stack.StackName() + "-ASG"),
+		AutoScalingGroupName: jsii.String(*stack.StackName() + "-ASG"),
+		Vpc:                  vpc,
+		VpcSubnets: &awsec2.SubnetSelection{
+			SubnetType: awsec2.SubnetType_PUBLIC,
+		},
+		SecurityGroup: sg,
+		InstanceType:  awsec2.InstanceType_Of(awsec2.InstanceClass_COMPUTE5, awsec2.InstanceSize_LARGE),
+		MachineImage: awsec2.NewAmazonLinuxImage(&awsec2.AmazonLinuxImageProps{
+			Generation: awsec2.AmazonLinuxGeneration_AMAZON_LINUX_2,
+		}),
 		BlockDevices: &[]*awsautoscaling.BlockDevice{
 			{
 				DeviceName: jsii.String("/dev/xvda"),
@@ -85,25 +102,21 @@ func NewAsgEc2Stack(scope constructs.Construct, id string, props *AsgEc2StackPro
 				}),
 			},
 		},
-		// Cooldown:                         nil, // only for simple scaling policy
-
+		AssociatePublicIpAddress: jsii.Bool(true),
+		KeyName:                  keyPair,
+		RequireImdsv2:            jsii.Bool(true),
+		UserData:                 userData,
+		Role:                     ec2Role,
+		MaxCapacity:              jsii.Number(5),
+		DesiredCapacity:          jsii.Number(2),
+		MinCapacity:              jsii.Number(1),
 		GroupMetrics: &[]awsautoscaling.GroupMetrics{
 			awsautoscaling.GroupMetrics_All(),
 		},
 		HealthCheck: awsautoscaling.HealthCheck_Elb(&awsautoscaling.ElbHealthCheckOptions{
-			Grace: awscdk.Duration_Seconds(jsii.Number(30)),
+			Grace: awscdk.Duration_Seconds(jsii.Number(180)),
 		}),
-		// IgnoreUnmodifiedSizeProperties:   new(bool),
-		// InstanceMonitoring:               "", // enable this if need detailed monitoring
-		KeyName:         keyPair,
-		MaxCapacity:     jsii.Number(5),
-		DesiredCapacity: jsii.Number(3),
-		// MaxInstanceLifetime:              nil, // no need to set this value, never replace instances on a schedule
-		MinCapacity: jsii.Number(1),
-		// Notifications:                    &[]*awsautoscaling.NotificationConfiguration{}, // send notification to SNS when fleet change.
-		// Signals:                          nil, // only available in CloudFormation
-		// SpotPrice:                        new(string), // don't need spot instances
-		NewInstancesProtectedFromScaleIn: jsii.Bool(true),
+		NewInstancesProtectedFromScaleIn: jsii.Bool(false),
 		TerminationPolicies: &[]awsautoscaling.TerminationPolicy{
 			awsautoscaling.TerminationPolicy_OLDEST_LAUNCH_CONFIGURATION,
 			awsautoscaling.TerminationPolicy_OLDEST_LAUNCH_TEMPLATE,
@@ -114,26 +127,25 @@ func NewAsgEc2Stack(scope constructs.Construct, id string, props *AsgEc2StackPro
 			MaxBatchSize:          jsii.Number(1),
 			MinInstancesInService: jsii.Number(1),
 		}),
-		VpcSubnets: &awsec2.SubnetSelection{
-			SubnetType: awsec2.SubnetType_PUBLIC,
-		},
-		InstanceType: awsec2.InstanceType_Of(awsec2.InstanceClass_COMPUTE5, awsec2.InstanceSize_LARGE),
-		MachineImage: awsec2.NewAmazonLinuxImage(&awsec2.AmazonLinuxImageProps{
-			Generation: awsec2.AmazonLinuxGeneration_AMAZON_LINUX_2,
-		}),
-		Vpc:           vpc,
-		Init:          nil,
-		RequireImdsv2: jsii.Bool(true),
-		SecurityGroup: sg,
-		UserData:      userData,
+		// AllowAllOutbound:                 jsii.Bool(false), // controll this by SecurityGroup
+		// Notifications:                    &[]*awsautoscaling.NotificationConfiguration{}, // send notification to SNS when fleet change.
+		// Init:                             nil, // only available in CloudFormation
+		// Signals:                          nil, // only available in CloudFormation
+		// SpotPrice:                        new(string), // don't need spot instances
+		// Cooldown:                         nil, // only for simple scaling policy
+		// IgnoreUnmodifiedSizeProperties:   new(bool),
+		// InstanceMonitoring:               "", // enable this if need detailed monitoring
+		// MaxInstanceLifetime:              nil, // no need to set this value, never replace instances on a schedule
 	})
 
-	asg.ScaleOnCpuUtilization(jsii.String("cpu-util-scaling"), &awsautoscaling.CpuUtilizationScalingProps{
-		TargetUtilizationPercent: jsii.Number(75),
-		DisableScaleIn:           jsii.Bool(true),
+	// Setup autoscaling policy
+	asg.ScaleOnCpuUtilization(jsii.String("CpuUtilizationPolicy"), &awsautoscaling.CpuUtilizationScalingProps{
+		TargetUtilizationPercent: jsii.Number(65),
+		DisableScaleIn:           jsii.Bool(false),
+		EstimatedInstanceWarmup:  awscdk.Duration_Seconds(jsii.Number(180)),
 	})
 
-	awscdk.NewCfnOutput(stack, jsii.String("ASG Name"), &awscdk.CfnOutputProps{
+	awscdk.NewCfnOutput(stack, jsii.String("Auto Scaling group name"), &awscdk.CfnOutputProps{
 		Value: jsii.String(*asg.AutoScalingGroupName()),
 	})
 

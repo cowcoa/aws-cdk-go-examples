@@ -23,6 +23,18 @@ fi
 
 # CDK command pre-process.
 
+# Destroy pre-process.
+if [ "$CDK_CMD" == "destroy" ]; then
+    # Remove PVRE hook auto-added policy before executing destroy.
+    # Feel free to remove this code block if you are not an AWS employee.
+    role_name="$(jq -r .context.stackName ./cdk.json)-${CDK_REGION}-EC2Role"
+    policy_arn="$(aws iam list-attached-role-policies --role-name ${role_name} --query 'AttachedPolicies[?PolicyName==`AmazonSSMManagedInstanceCore`].PolicyArn' --output text)"
+
+    if [ ! -z "$policy_arn" ]; then
+        aws iam detach-role-policy --role-name $role_name --policy-arn $policy_arn
+    fi
+fi
+
 # CDK command.
 # Valid deploymentStage are: [DEV, PROD]
 set -- "$@" "-c" "deploymentStage=DEV"
