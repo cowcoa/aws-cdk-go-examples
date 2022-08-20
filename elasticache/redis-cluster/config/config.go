@@ -19,7 +19,7 @@ func StackName(scope constructs.Construct) string {
 	return stackName
 }
 
-// DO NOT modify this function, change stack name by 'cdk.json/context/password'.
+// DO NOT modify this function, change redis password by 'cdk.json/context/password'.
 // Password constraints:
 // Must be only printable ASCII characters.
 // Must be at least 16 characters and no more than 128 characters in length.
@@ -35,7 +35,7 @@ func Password(scope constructs.Construct) string {
 	return password
 }
 
-// DO NOT modify this function, change stack name by 'cdk.json/context/port'.
+// DO NOT modify this function, change redis port by 'cdk.json/context/port'.
 func Port(scope constructs.Construct) float64 {
 	password := float64(6379)
 
@@ -55,7 +55,7 @@ const (
 	DeploymentStage_PROD DeploymentStageType = "PROD"
 )
 
-// DO NOT modify this function, change EKS cluster name by 'cdk-cli-wrapper-dev.sh/--context deploymentStage='.
+// DO NOT modify this function, change deployment stage by 'cdk-cli-wrapper-dev.sh/--context deploymentStage='.
 func DeploymentStage(scope constructs.Construct) DeploymentStageType {
 	deploymentStage := DeploymentStage_PROD
 
@@ -67,6 +67,7 @@ func DeploymentStage(scope constructs.Construct) DeploymentStageType {
 	return deploymentStage
 }
 
+// VPC config
 const (
 	vpcMask    = 16
 	vpcIpv4    = "172.33.0.0"
