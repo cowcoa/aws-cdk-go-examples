@@ -143,12 +143,12 @@ func NewRdsMySqlClusterStack(scope constructs.Construct, id string, props *RdsMy
 	})
 
 	awsrds.NewDatabaseInstanceReadReplica(stack, jsii.String("ReplicaDBInstance"), &awsrds.DatabaseInstanceReadReplicaProps{
-		InstanceIdentifier: jsii.String(*stack.StackName() + "ReplicaDBInstance"),
+		InstanceIdentifier: jsii.String(*stack.StackName() + "-ReplicaDBInstance"),
 		Vpc:                vpc,
 		SecurityGroups: &[]awsec2.ISecurityGroup{
 			sg,
 		},
-		InstanceType:           awsec2.InstanceType_Of(awsec2.InstanceClass_MEMORY5, awsec2.InstanceSize_LARGE),
+		InstanceType:           awsec2.InstanceType_Of(awsec2.InstanceClass_BURSTABLE3, awsec2.InstanceSize_LARGE),
 		SubnetGroup:            subnetGrp,
 		ParameterGroup:         paramGrp,
 		StorageType:            awsrds.StorageType_GP2,
