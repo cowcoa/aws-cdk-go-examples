@@ -29,3 +29,16 @@ func StackName(scope constructs.Construct) string {
 
 	return stackName
 }
+
+// DO NOT modify this function, set whether to use rds proxy by 'cdk.json/context/enableProxy'.
+// The valid value are: true | false
+func EnableProxy(scope constructs.Construct) bool {
+	enableProxy := false
+
+	ctxValue := scope.Node().TryGetContext(jsii.String("enableProxy"))
+	if v, ok := ctxValue.(bool); ok {
+		enableProxy = v
+	}
+
+	return enableProxy
+}

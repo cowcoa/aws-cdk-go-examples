@@ -142,6 +142,32 @@ func NewRdsMySqlClusterStack(scope constructs.Construct, id string, props *RdsMy
 		// StorageEncryptionKey:            nil, // no need to specify if you don't encrypt your database
 	})
 
+	// Enable RDS Proxy or not
+	if config.EnableProxy(stack) {
+		awsrds.NewDatabaseProxy(stack, jsii.String("RDSProxy"), &awsrds.DatabaseProxyProps{
+			DbProxyName: jsii.String(*stack.StackName() + "-RDSProxy"),
+			Vpc:         vpc,
+			VpcSubnets:  &awsec2.SubnetSelection{SubnetType: awsec2.SubnetType_PUBLIC},
+			SecurityGroups: &[]awsec2.ISecurityGroup{
+				sg,
+			},
+			ProxyTarget: awsrds.ProxyTarget_FromInstance(dbPrimInstance),
+			Secrets: &[]secretmgr.ISecret{
+				dbSecret,
+			},
+			IamAuth:                   jsii.Bool(false),
+			RequireTLS:                jsii.Bool(false),
+			BorrowTimeout:             awscdk.Duration_Seconds(jsii.Number(30)),
+			IdleClientTimeout:         awscdk.Duration_Hours(jsii.Number(1)), // Minimum 1 minute. Maximum: 8 hours
+			MaxConnectionsPercent:     jsii.Number(95),
+			MaxIdleConnectionsPercent: jsii.Number(95), // between 0 and MaxConnectionsPercent
+			DebugLogging:              jsii.Bool(true),
+			// InitQuery:                 new(string),
+			// Role:                      nil,
+			// SessionPinningFilters: &[]awsrds.SessionPinningFilter{},
+		})
+	}
+
 	awsrds.NewDatabaseInstanceReadReplica(stack, jsii.String("ReplicaDBInstance"), &awsrds.DatabaseInstanceReadReplicaProps{
 		InstanceIdentifier: jsii.String(*stack.StackName() + "-ReplicaDBInstance"),
 		Vpc:                vpc,
