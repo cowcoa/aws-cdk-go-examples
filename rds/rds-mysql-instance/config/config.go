@@ -42,3 +42,28 @@ func EnableProxy(scope constructs.Construct) bool {
 
 	return enableProxy
 }
+
+// DO NOT modify this function, set whether to use rds replica by 'cdk.json/context/enableReplica'.
+// The valid value are: true | false
+func EnableReplica(scope constructs.Construct) bool {
+	enableReplica := false
+
+	ctxValue := scope.Node().TryGetContext(jsii.String("enableReplica"))
+	if v, ok := ctxValue.(bool); ok {
+		enableReplica = v
+	}
+
+	return enableReplica
+}
+
+// DO NOT modify this function, change event subscription by 'cdk.json/context/eventSubEmail'.
+func EventSubEmail(scope constructs.Construct) string {
+	eventSubEmail := "aws@amazon.com"
+
+	ctxValue := scope.Node().TryGetContext(jsii.String("eventSubEmail"))
+	if v, ok := ctxValue.(string); ok {
+		eventSubEmail = v
+	}
+
+	return eventSubEmail
+}

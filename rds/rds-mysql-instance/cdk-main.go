@@ -8,6 +8,8 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsrds"
 	secretmgr "github.com/aws/aws-cdk-go/awscdk/v2/awssecretsmanager"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awssnssubscriptions"
 
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
@@ -82,7 +84,7 @@ func NewRdsMySqlClusterStack(scope constructs.Construct, id string, props *RdsMy
 		},
 		RemovalPolicy: awscdk.RemovalPolicy_DESTROY,
 	})
-	// Create RDS MySQL DB instance.
+	// Create RDS MySQL DB primary instance.
 	dbPrimInstance := awsrds.NewDatabaseInstance(stack, jsii.String("PrimaryDBInstance"), &awsrds.DatabaseInstanceProps{
 		InstanceIdentifier: jsii.String(*stack.StackName() + "-PrimaryDBInstance"),
 		Vpc:                vpc,
@@ -123,28 +125,44 @@ func NewRdsMySqlClusterStack(scope constructs.Construct, id string, props *RdsMy
 		DeletionProtection:          jsii.Bool(false),
 		RemovalPolicy:               awscdk.RemovalPolicy_DESTROY,
 		// AvailabilityZone:                jsii.String(*stack.Region() + "a"), // Requesting a specific availability zone is not valid for Multi-AZ instances
-		// CharacterSetName:                jsii.String("utf8mb4"), // isn't supported when creating an instance using version 5.7 of mysql
-		// CloudwatchLogsRetentionRole:     nil, // CDK utility role, automatically created
-		// MonitoringRole:                  nil, // will be automatically created
-		// OptionGroup:                     nil, // https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.MySQL.Options.html
-		// PerformanceInsightEncryptionKey: nil, // no need to specify if you don't encrypt your PI
-		// ProcessorFeatures:               &awsrds.ProcessorFeatures{}, // no need to specify
-		// S3ExportBuckets:                 &[]awss3.IBucket{}, // for exporting snapshot to s3 bucket
+		// CharacterSetName:                jsii.String("utf8mb4"),             // isn't supported when creating an instance using version 5.7 of mysql
+		// CloudwatchLogsRetentionRole:     nil,                                // CDK utility role, automatically created
+		// MonitoringRole:                  nil,                                // will be automatically created
+		// OptionGroup:                     nil,                                // https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.MySQL.Options.html
+		// PerformanceInsightEncryptionKey: nil,                                // no need to specify if you don't encrypt your PI
+		// ProcessorFeatures:               &awsrds.ProcessorFeatures{},        // no need to specify
+		// S3ExportBuckets:                 &[]awss3.IBucket{},                 // for exporting snapshot to s3 bucket
 		// S3ExportRole:                    nil,
-		// VpcSubnets:                      &awsec2.SubnetSelection{}, specified in subnet group
-		// Parameters:                      &map[string]*string{}, // specified in parameter group
-		// LicenseModel:                    "", // for Microsoft SQL Server
-		// Timezone:                        new(string), // only support by Microsoft SQL Server
-		// S3ImportBuckets:                 &[]awss3.IBucket{}, // only support by Microsoft SQL Server
+		// VpcSubnets:                      &awsec2.SubnetSelection{},          // specified in subnet group
+		// Parameters:                      &map[string]*string{},              // specified in parameter group
+		// LicenseModel:                    "",                                 // for Microsoft SQL Server
+		// Timezone:                        new(string),                        // only support by Microsoft SQL Server
+		// S3ImportBuckets:                 &[]awss3.IBucket{},                 // only support by Microsoft SQL Server
 		// S3ImportRole:                    nil,
-		// Domain:                          new(string), // using MS AD for Microsoft SQL Server DB instance
+		// Domain:                          new(string),                        // using MS AD for Microsoft SQL Server DB instance
 		// DomainRole:                      nil,
-		// StorageEncryptionKey:            nil, // no need to specify if you don't encrypt your database
+		// StorageEncryptionKey:            nil,                                // no need to specify if you don't encrypt your database
 	})
 
-	// Enable RDS Proxy or not
+	// Create RDS MySQL DB replica instance.
+	if config.EnableReplica(stack) {
+		awsrds.NewDatabaseInstanceReadReplica(stack, jsii.String("ReplicaDBInstance"), &awsrds.DatabaseInstanceReadReplicaProps{
+			InstanceIdentifier: jsii.String(*stack.StackName() + "-ReplicaDBInstance"),
+			Vpc:                vpc,
+			SecurityGroups: &[]awsec2.ISecurityGroup{
+				sg,
+			},
+			InstanceType:           awsec2.InstanceType_Of(awsec2.InstanceClass_BURSTABLE3, awsec2.InstanceSize_LARGE),
+			SubnetGroup:            subnetGrp,
+			ParameterGroup:         paramGrp,
+			StorageType:            awsrds.StorageType_GP2,
+			SourceDatabaseInstance: dbPrimInstance,
+		})
+	}
+
+	// Enable RDS Proxy
 	if config.EnableProxy(stack) {
-		awsrds.NewDatabaseProxy(stack, jsii.String("RDSProxy"), &awsrds.DatabaseProxyProps{
+		dbProxy := awsrds.NewDatabaseProxy(stack, jsii.String("RDSProxy"), &awsrds.DatabaseProxyProps{
 			DbProxyName: jsii.String(*stack.StackName() + "-RDSProxy"),
 			Vpc:         vpc,
 			VpcSubnets:  &awsec2.SubnetSelection{SubnetType: awsec2.SubnetType_PUBLIC},
@@ -166,23 +184,38 @@ func NewRdsMySqlClusterStack(scope constructs.Construct, id string, props *RdsMy
 			// Role:                      nil,
 			// SessionPinningFilters: &[]awsrds.SessionPinningFilter{},
 		})
+
+		awscdk.NewCfnOutput(stack, jsii.String("RDSProxyEndpoint"), &awscdk.CfnOutputProps{
+			Value: jsii.String(*dbProxy.Endpoint()),
+		})
 	}
 
-	awsrds.NewDatabaseInstanceReadReplica(stack, jsii.String("ReplicaDBInstance"), &awsrds.DatabaseInstanceReadReplicaProps{
-		InstanceIdentifier: jsii.String(*stack.StackName() + "-ReplicaDBInstance"),
-		Vpc:                vpc,
-		SecurityGroups: &[]awsec2.ISecurityGroup{
-			sg,
-		},
-		InstanceType:           awsec2.InstanceType_Of(awsec2.InstanceClass_BURSTABLE3, awsec2.InstanceSize_LARGE),
-		SubnetGroup:            subnetGrp,
-		ParameterGroup:         paramGrp,
-		StorageType:            awsrds.StorageType_GP2,
-		SourceDatabaseInstance: dbPrimInstance,
-	})
+	// Setup RDS 'failover' event subscription.
+	if len(config.EventSubEmail(stack)) >= 5 {
+		snsTopic := awssns.NewTopic(stack, jsii.String("Events"), &awssns.TopicProps{
+			TopicName:   jsii.String(*stack.StackName() + "-Events"),
+			DisplayName: jsii.String("RDS events subscription"),
+			Fifo:        jsii.Bool(false),
+		})
+		emailSub := awssnssubscriptions.NewEmailSubscription(jsii.String(config.EventSubEmail(stack)), &awssnssubscriptions.EmailSubscriptionProps{})
+		snsTopic.AddSubscription(emailSub)
+
+		awsrds.NewCfnEventSubscription(stack, jsii.String("EventSubscription"), &awsrds.CfnEventSubscriptionProps{
+			Enabled:     true,
+			SnsTopicArn: snsTopic.TopicArn(),
+			SourceIds: &[]*string{
+				dbPrimInstance.InstanceIdentifier(),
+			},
+			SourceType: jsii.String("db-instance"),
+			EventCategories: &[]*string{
+				// https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_Events.Messages.html
+				jsii.String("failover"),
+			},
+		})
+	}
 
 	// Output data source info.
-	awscdk.NewCfnOutput(stack, jsii.String("Host"), &awscdk.CfnOutputProps{
+	awscdk.NewCfnOutput(stack, jsii.String("RDSPrimaryEndpoint"), &awscdk.CfnOutputProps{
 		Value: dbPrimInstance.InstanceEndpoint().Hostname(),
 	})
 	awscdk.NewCfnOutput(stack, jsii.String("Database"), &awscdk.CfnOutputProps{
