@@ -24,10 +24,14 @@
       "aws",
       "aws-cn"
     ],
-    "stackName": "CDKGoExample-RdsMySqlCluster",
+    "stackName": "CDKGoExample-RDSMySQLInstance",
     "deploymentRegion": "ap-northeast-1",
     "enableProxy": true,
     "enableReplica": true,
+    "enableMultiAz": true,
+    "mysqlVersion": 8.0,
+    "masterUser": "cow",
+    "initDatabase": "mydb",
     "eventSubEmail": ""
   }
 }

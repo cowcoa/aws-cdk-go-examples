@@ -5,19 +5,6 @@ import (
 	"github.com/aws/jsii-runtime-go"
 )
 
-// MySQL DataSource info.
-type DataSource struct {
-	Database string
-	User     string
-}
-
-// DO NOT keep DB info here.
-// This is just for convenience of testing.
-var MySqlConnection = DataSource{
-	Database: "mydb",
-	User:     "cow",
-}
-
 // DO NOT modify this function, change stack name by 'cdk.json/context/stackName'.
 func StackName(scope constructs.Construct) string {
 	stackName := "RdsMysqlCluster"
@@ -56,6 +43,30 @@ func EnableReplica(scope constructs.Construct) bool {
 	return enableReplica
 }
 
+// DO NOT modify this function, set multi az by 'cdk.json/context/enableMultiAz'.
+func EnableMultiAz(scope constructs.Construct) bool {
+	enableMultiAz := false
+
+	ctxValue := scope.Node().TryGetContext(jsii.String("enableMultiAz"))
+	if v, ok := ctxValue.(bool); ok {
+		enableMultiAz = v
+	}
+
+	return enableMultiAz
+}
+
+// DO NOT modify this function, set mysql version by 'cdk.json/context/mysqlVersion'.
+func MySQLVersion(scope constructs.Construct) float64 {
+	mysqlVersion := 5.7
+
+	ctxValue := scope.Node().TryGetContext(jsii.String("mysqlVersion"))
+	if v, ok := ctxValue.(float64); ok {
+		mysqlVersion = v
+	}
+
+	return mysqlVersion
+}
+
 // DO NOT modify this function, change event subscription by 'cdk.json/context/eventSubEmail'.
 func EventSubEmail(scope constructs.Construct) string {
 	eventSubEmail := "aws@amazon.com"
@@ -66,4 +77,28 @@ func EventSubEmail(scope constructs.Construct) string {
 	}
 
 	return eventSubEmail
+}
+
+// DO NOT modify this function, set db master user by 'cdk.json/context/masterUser'.
+func MasterUser(scope constructs.Construct) string {
+	masterUser := "admin"
+
+	ctxValue := scope.Node().TryGetContext(jsii.String("masterUser"))
+	if v, ok := ctxValue.(string); ok {
+		masterUser = v
+	}
+
+	return masterUser
+}
+
+// DO NOT modify this function, set init database by 'cdk.json/context/initDatabase'.
+func InitDatabase(scope constructs.Construct) string {
+	initDatabase := "mydb"
+
+	ctxValue := scope.Node().TryGetContext(jsii.String("initDatabase"))
+	if v, ok := ctxValue.(string); ok {
+		initDatabase = v
+	}
+
+	return initDatabase
 }

@@ -51,9 +51,16 @@ func NewRdsMySqlClusterStack(scope constructs.Construct, id string, props *RdsMy
 		jsii.Bool(false),
 	)
 	// Database engine version.
-	engine := awsrds.DatabaseInstanceEngine_Mysql(&awsrds.MySqlInstanceEngineProps{
-		Version: awsrds.MysqlEngineVersion_VER_5_7_34(),
-	})
+	var engine awsrds.IInstanceEngine
+	if config.MySQLVersion(stack) < 7 {
+		engine = awsrds.DatabaseInstanceEngine_Mysql(&awsrds.MySqlInstanceEngineProps{
+			Version: awsrds.MysqlEngineVersion_VER_5_7_34(),
+		})
+	} else {
+		engine = awsrds.DatabaseInstanceEngine_Mysql(&awsrds.MySqlInstanceEngineProps{
+			Version: awsrds.MysqlEngineVersion_VER_8_0_26(),
+		})
+	}
 	// Database subnet group.
 	subnetGrp := awsrds.NewSubnetGroup(stack, jsii.String("SubnetGroup"), &awsrds.SubnetGroupProps{
 		Vpc:             vpc,
@@ -68,8 +75,9 @@ func NewRdsMySqlClusterStack(scope constructs.Construct, id string, props *RdsMy
 		Engine:      engine,
 		Description: jsii.String("Custom ParameterGroup"),
 		Parameters: &map[string]*string{
-			"event_scheduler":        jsii.String("ON"),
-			"innodb_sync_array_size": jsii.String("16"),
+			// "event_scheduler":        jsii.String("ON"),
+			// "innodb_sync_array_size": jsii.String("16"),
+			"lower_case_table_names": jsii.String("1"),
 		},
 	})
 	// Database credential in SecretManager
@@ -99,12 +107,12 @@ func NewRdsMySqlClusterStack(scope constructs.Construct, id string, props *RdsMy
 		AllocatedStorage:           jsii.Number(100),
 		MaxAllocatedStorage:        jsii.Number(500),
 		StorageEncrypted:           jsii.Bool(false),
-		MultiAz:                    jsii.Bool(true),
-		DatabaseName:               jsii.String(config.MySqlConnection.Database),
+		MultiAz:                    jsii.Bool(config.EnableMultiAz(stack)),
+		DatabaseName:               jsii.String(config.InitDatabase(stack)),
 		Engine:                     engine,
 		Port:                       jsii.Number(3306),
 		PubliclyAccessible:         jsii.Bool(true),
-		Credentials:                awsrds.Credentials_FromSecret(dbSecret, jsii.String(config.MySqlConnection.User)),
+		Credentials:                awsrds.Credentials_FromSecret(dbSecret, jsii.String(config.MasterUser(stack))),
 		IamAuthentication:          jsii.Bool(false),
 		AllowMajorVersionUpgrade:   jsii.Bool(false),
 		AutoMinorVersionUpgrade:    jsii.Bool(true),
@@ -219,10 +227,10 @@ func NewRdsMySqlClusterStack(scope constructs.Construct, id string, props *RdsMy
 		Value: dbPrimInstance.InstanceEndpoint().Hostname(),
 	})
 	awscdk.NewCfnOutput(stack, jsii.String("Database"), &awscdk.CfnOutputProps{
-		Value: jsii.String(config.MySqlConnection.Database),
+		Value: jsii.String(config.InitDatabase(stack)),
 	})
 	awscdk.NewCfnOutput(stack, jsii.String("User"), &awscdk.CfnOutputProps{
-		Value: jsii.String(config.MySqlConnection.User),
+		Value: jsii.String(config.MasterUser(stack)),
 	})
 
 	// Output secet info.
