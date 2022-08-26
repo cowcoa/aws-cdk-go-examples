@@ -75,10 +75,9 @@ func NewRdsMySqlClusterStack(scope constructs.Construct, id string, props *RdsMy
 	paramGrp := awsrds.NewParameterGroup(stack, jsii.String("ParameterGroup"), &awsrds.ParameterGroupProps{
 		Engine:      engine,
 		Description: jsii.String("Custom ParameterGroup"),
-		Parameters: &map[string]*string{
+		Parameters:  &map[string]*string{
 			// "event_scheduler":        jsii.String("ON"),
 			// "innodb_sync_array_size": jsii.String("16"),
-			"lower_case_table_names": jsii.String("1"),
 		},
 	})
 
