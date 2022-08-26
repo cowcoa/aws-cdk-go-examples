@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
@@ -80,12 +81,13 @@ func NewRdsMySqlClusterStack(scope constructs.Construct, id string, props *RdsMy
 			"lower_case_table_names": jsii.String("1"),
 		},
 	})
+
 	// Database credential in SecretManager
 	// The Secret must be a JSON string with a “username“ and “password“ field
 	dbSecret := secretmgr.NewSecret(stack, jsii.String("DBSecret"), &secretmgr.SecretProps{
 		SecretName: jsii.String(*stack.StackName() + "-Secret"),
 		GenerateSecretString: &secretmgr.SecretStringGenerator{
-			SecretStringTemplate: jsii.String(string(`{"username":"cow"}`)),
+			SecretStringTemplate: jsii.String(fmt.Sprintf(`{"username":"%s"}`, config.MasterUser(stack))),
 			ExcludePunctuation:   jsii.Bool(true),
 			IncludeSpace:         jsii.Bool(false),
 			GenerateStringKey:    jsii.String("password"),
