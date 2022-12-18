@@ -232,9 +232,6 @@ func NewOpensearchCognitoStack(scope constructs.Construct, id string, props *Ope
 			},
 		}),
 	})
-	awscdk.NewCfnOutput(stack, jsii.String("providerName"), &awscdk.CfnOutputProps{
-		Value: jsii.String(providerName),
-	})
 
 	return stack
 }
