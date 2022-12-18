@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
@@ -8,6 +9,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsec2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsopensearchservice"
+	"github.com/aws/aws-cdk-go/awscdk/v2/customresources"
 
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
@@ -96,13 +98,6 @@ func NewOpensearchCognitoStack(scope constructs.Construct, id string, props *Ope
 		}, jsii.String("sts:AssumeRoleWithWebIdentity")),
 	})
 	unauthRole.Node().AddDependency(identityPool)
-	awscognito.NewCfnIdentityPoolRoleAttachment(stack, jsii.String("IdentityRoleAttach"), &awscognito.CfnIdentityPoolRoleAttachmentProps{
-		IdentityPoolId: identityPool.Ref(),
-		Roles: &map[string]interface{}{
-			"authenticated":   authRole.RoleArn(),
-			"unauthenticated": unauthRole.RoleArn(),
-		},
-	})
 
 	// Add group to Cognito user pool
 	masterUserRole := awsiam.NewRole(stack, jsii.String("OpensearchMasterRole"), &awsiam.RoleProps{
@@ -200,6 +195,46 @@ func NewOpensearchCognitoStack(scope constructs.Construct, id string, props *Ope
 	})
 	domain.Node().AddDependency(identityPool)
 	domain.Node().AddDependency(userPool)
+
+	// Get Cognito user pool's client id that added by OpenSearch Domain automatically.
+	userPoolClients := customresources.NewAwsCustomResource(stack, jsii.String("ClientIdResource"), &customresources.AwsCustomResourceProps{
+		Policy: customresources.AwsCustomResourcePolicy_FromSdkCalls(&customresources.SdkCallsPolicyOptions{
+			Resources: &[]*string{
+				userPool.UserPoolArn(),
+			},
+		}),
+		OnCreate: &customresources.AwsSdkCall{
+			Service: jsii.String("CognitoIdentityServiceProvider"),
+			Action:  jsii.String("listUserPoolClients"),
+			Parameters: &map[string]interface{}{
+				"UserPoolId": userPool.UserPoolId(),
+			},
+			PhysicalResourceId: customresources.PhysicalResourceId_Of(jsii.String(fmt.Sprintf("ClientId-%s", *domain.DomainName()))),
+		},
+	})
+	userPoolClients.Node().AddDependency(domain)
+	clientId := userPoolClients.GetResponseField(jsii.String("UserPoolClients.0.ClientId"))
+
+	// Modify identity pool's role mapping
+	providerName := fmt.Sprintf("cognito-idp.%s.amazonaws.com/%s:%s", *stack.Region(), *userPool.UserPoolId(), *clientId)
+	awscognito.NewCfnIdentityPoolRoleAttachment(stack, jsii.String("IdentityRoleAttach"), &awscognito.CfnIdentityPoolRoleAttachmentProps{
+		IdentityPoolId: identityPool.Ref(),
+		Roles: &map[string]interface{}{
+			"authenticated":   authRole.RoleArn(),
+			"unauthenticated": unauthRole.RoleArn(),
+		},
+		RoleMappings: awscdk.NewCfnJson(stack, jsii.String("RoleMappings"), &awscdk.CfnJsonProps{
+			Value: &map[string]interface{}{
+				providerName: &map[string]string{
+					"Type":                    "Token",
+					"AmbiguousRoleResolution": "Deny",
+				},
+			},
+		}),
+	})
+	awscdk.NewCfnOutput(stack, jsii.String("providerName"), &awscdk.CfnOutputProps{
+		Value: jsii.String(providerName),
+	})
 
 	return stack
 }
